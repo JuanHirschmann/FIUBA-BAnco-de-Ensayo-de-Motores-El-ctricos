@@ -3,6 +3,8 @@ package Views;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
@@ -12,18 +14,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-public class Views extends JPanel {
-
+public class Views {
     JFrame frame = new JFrame("Banco de ensayo - FIUBA");
-    JPanel panelContainer = new JPanel();
-    JPanel panelFirst = new JPanel();
-    JPanel panelSecond = new JPanel();
-    //JButton buttonOne = new JButton("Switch to second panel/workspace");
-    //JButton buttonSecond = new JButton("Switch to first panel/workspace");
-    JButton buttonStart = new JButton("Arranque");
-    JButton buttonStop = new JButton("Frenado");
+    JPanel mainPanel= new JPanel(new BorderLayout());
+    JPanel controlPanel = new JPanel(new GridLayout());
+    JPanel inputPanel = new JPanel(new FlowLayout());
     JButton buttonPause = new JButton("Pausa");
-    // JButton buttonConnect = new JButton("Conectar");
     JLabel targetIPLabel = new JLabel("IP objetivo:");
     JTextField targetIPInput = new JTextField(20);
     JLabel speedTimeFunctionLabel = new JLabel("Función de velocidad en función del tiempo:");
@@ -37,78 +33,65 @@ public class Views extends JPanel {
     JLabel stopTimeLabel = new JLabel("Tiempo de fin [s]:");
     JTextField stopTimeInput = new JTextField(10);
     JLabel errorMsgLabel = new JLabel("");
-    JLabel varValueLabel= new JLabel("");
+    JLabel varValueLabel = new JLabel("");
+    JLabel targetVarNameLabel = new JLabel("VarName");
     JTextField targetVarNameInput = new JTextField(10);
-
+    JLabel targetVarPathLabel = new JLabel("VarPath");
     JTextField targetVarPathInput = new JTextField(10);
+    JLabel targetVarValueLabel = new JLabel("VarValue");
+    JTextField targetVarValueInput = new JTextField(10);
     // CardLayout cardLayout = new CardLayout();
-    
+
+    public void display() {
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setup();;
+        frame.setSize(1200, 800);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        mainPanel.add(inputPanel,BorderLayout.CENTER);
+        frame.add(mainPanel);
+    }
 
     public Views() {
-        super(new BorderLayout());
+        // super(new GridLayout(3,4));
+        
 
     }
-
-    public JPanel setup(JPanel panel) {
-        // panelContainer.setLayout(cardLayout);
-
-        //panel.add(buttonOne);
-        panel.add(buttonStart);
-        panel.add(buttonPause);
-        panel.add(buttonStop);
-        panel.add(speedTimeFunctionLabel);
-        panel.add(speedTimeFunctionInput);
-        panel.add(torqueTimeFunctionLabel);
-        panel.add(torqueTimeFunctionInput);
-        panel.add(torqueSpeedFunctionLabel);
-        panel.add(torqueSpeedFunctionInput);
-        panel.add(startTimeLabel);
-        panel.add(startTimeInput);
-        panel.add(stopTimeLabel);
-        panel.add(stopTimeInput);
-        panel.add(targetIPLabel);
-        panel.add(targetIPInput);
-        panel.add(targetVarNameInput);
-        panel.add(targetVarPathInput);
-        panel.add(errorMsgLabel);
-        panel.add(varValueLabel);
-        panel.setBackground(Color.GRAY);
-        // panelSecond.add(buttonSecond);
-        // panelSecond.setBackground(Color.GREEN);
-
-        // panelContainer.add(panelFirst, "1");
-        // panelContainer.add(panelSecond, "2");
-        // cardLayout.show(panelContainer, "1");
-
-        /*
-         * buttonOne.addActionListener(new ActionListener() {
-         * 
-         * @Override
-         * public void actionPerformed(ActionEvent arg0) {
-         * //cardLayout.show(panelContainer, "2");
-         * }
-         * });
-         */
-
-        /*
-         * buttonSecond.addActionListener(new ActionListener() {
-         * 
-         * @Override
-         * public void actionPerformed(ActionEvent arg0) {
-         * cardLayout.show(panelContainer, "1");
-         * }
-         * });
-         */
-
-        // frame.add(panelContainer);
-        // frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        // frame.pack();
-        // frame.setVisible(true);
-        // this.setLayout();
-        return panel;
+    public JPanel getControlPanel()
+    {
+        return controlPanel;
+    }
+    public void setupControlPanel() {
+        mainPanel.add(controlPanel,BorderLayout.NORTH);
+        controlPanel.add(buttonPause);
+        controlPanel.add(targetIPLabel);
+        controlPanel.add(targetIPInput);
+        controlPanel.add(errorMsgLabel);
+        frame.pack();
     }
 
-    
+    private void setup() {
+        inputPanel.add(speedTimeFunctionLabel);
+        inputPanel.add(speedTimeFunctionInput);
+        inputPanel.add(torqueTimeFunctionLabel);
+        inputPanel.add(torqueTimeFunctionInput);
+        inputPanel.add(torqueSpeedFunctionLabel);
+        inputPanel.add(torqueSpeedFunctionInput);
+        inputPanel.add(startTimeLabel);
+        inputPanel.add(startTimeInput);
+        inputPanel.add(stopTimeLabel);
+        inputPanel.add(stopTimeInput);
+        inputPanel.add(targetVarNameLabel);
+        inputPanel.add(targetVarNameInput);
+        inputPanel.add(targetVarPathLabel);
+        inputPanel.add(targetVarPathInput);
+        inputPanel.add(targetVarValueLabel);
+        inputPanel.add(varValueLabel);
+        inputPanel.add(targetVarValueInput);
+        inputPanel.setBackground(Color.GRAY);
+        targetIPInput.setText("http://192.168.214.1/soap/opcxml/");
+
+    }
 
     public String getTargetIP() {
         System.err.println(this.targetIPInput.getText());
@@ -116,18 +99,23 @@ public class Views extends JPanel {
     }
 
     public String getTargetVarName() {
-        System.err.println(this.targetIPInput.getText());
+        System.err.println(this.targetVarPathInput.getText());
         return this.targetVarPathInput.getText();
     }
 
     public String getTargetVarPath() {
-        System.err.println(this.targetIPInput.getText());
+        System.err.println(this.targetVarNameInput.getText());
         return this.targetVarNameInput.getText();
     }
-    public void setVarValue(String value)
-    {
+    public String getTargetVarValue() {
+        System.err.println(this.targetVarValueInput.getText());
+        return this.targetVarValueInput.getText();
+    }
+
+    public void setVarValue(String value) {
         this.varValueLabel.setText(value);
     }
+
     public void alert(String message) {
         errorMsgLabel.setText(message);
     }

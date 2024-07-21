@@ -1,9 +1,12 @@
 package Model;
 
 import java.net.ConnectException;
-import java.util.concurrent.ExecutionException;
-
 import javax.xml.namespace.QName;
+import static Model.Constants.VAR_PATH;
+import static Model.Constants.TEST_VAR;
+import static Model.Constants.RUN;
+import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
+import static Model.Constants.NEW_SPEED_SETPOINT_LOAD_AXIS;
 
 import org.opcfoundation.webservices.XMLDA._1_0.Browse;
 import org.opcfoundation.webservices.XMLDA._1_0.BrowseElement;
@@ -147,5 +150,32 @@ public class Model {
             throw new ConnectException("No se encontró la variable " + varName + " en el path: " + varPath);
             // jLabelStatus.setText("Error reading item \"" + itemName + "\"");
         }
+    }
+
+    public String readTestVar() throws ConnectException
+    {
+        return readVar(VAR_PATH, TEST_VAR);
+    }
+    
+    public String readRunVar() throws ConnectException
+    {
+        return readVar(VAR_PATH, TEST_VAR);
+    }
+    public void setLoadAxisSpeed(String speedSetpoint) throws ConnectException
+    {
+        writeVar(speedSetpoint,VAR_PATH, LOAD_AXIS_SPEED_SETPOINT);
+        writeVar("True",VAR_PATH, NEW_SPEED_SETPOINT_LOAD_AXIS);
+    }
+    public String readMotorLoadAxisSpeed() throws ConnectException
+    {
+        return readVar(VAR_PATH, TEST_VAR);
+    }
+    public void run() throws ConnectException
+    {
+        writeVar("True",VAR_PATH, RUN);
+    }
+    public void stop() throws ConnectException
+    {
+        writeVar("False",VAR_PATH, RUN);
     }
 }
