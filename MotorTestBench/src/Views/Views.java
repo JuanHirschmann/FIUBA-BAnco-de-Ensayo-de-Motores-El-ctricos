@@ -7,6 +7,9 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,7 +19,7 @@ import javax.swing.SwingUtilities;
 
 public class Views {
     JFrame frame = new JFrame("Banco de ensayo - FIUBA");
-    JPanel mainPanel= new JPanel(new BorderLayout());
+    JPanel mainPanel = new JPanel(new BorderLayout());
     JPanel controlPanel = new JPanel(new GridLayout());
     JPanel inputPanel = new JPanel(new FlowLayout());
     JButton buttonPause = new JButton("Pausa");
@@ -40,29 +43,60 @@ public class Views {
     JTextField targetVarPathInput = new JTextField(10);
     JLabel targetVarValueLabel = new JLabel("VarValue");
     JTextField targetVarValueInput = new JTextField(10);
-    // CardLayout cardLayout = new CardLayout();
 
+    // Medicion de variables
+
+    JLabel simulatorTorqueLabel = new JLabel("Torque en eje simulador: ");
+    JLabel simulatorSpeedLabel = new JLabel("Velocidad en eje simulador: ");
+    JLabel simulatorVoltageLabel = new JLabel("Tensión en eje simulador: ");
+    JLabel simulatorCurrentLabel = new JLabel("Corriente en eje simulador: ");
+    JLabel simulatorPowerLabel = new JLabel("Potencia en eje simulador: ");
+    JLabel simulatorTorqueValueLabel = new JLabel("-- Nm");
+    JLabel simulatorSpeedValueLabel = new JLabel("-- RPM");
+    JLabel simulatorVoltageValueLabel = new JLabel("-- V");
+    JLabel simulatorCurrentValueLabel = new JLabel("-- A");
+    JLabel simulatorPowerValueLabel = new JLabel("-- kW");
+
+    
+    
+    /**  Actualiza las mediciones en pantalla, agrega la unidad de medida al final de la 
+     * Cadena de texto 
+     * @param simulator_torque Torque medido en Nm
+     * @param simulator_speed velocidad medida en RPM
+     * @param simulator_current Corriente medida en A
+     * @param simulator_voltage Tensión medida en V
+     * @param simulator_power Potencia medida en W
+     */
+    public void updateMeasurements(String simulator_torque,String simulator_speed, String simulator_current, String simulator_voltage, String simulator_power )
+    {
+        simulatorTorqueValueLabel.setText(simulator_torque+" Nm");
+        simulatorSpeedValueLabel.setText(simulator_speed+" RPM");
+        simulatorCurrentValueLabel.setText(simulator_current+" A");
+        simulatorVoltageValueLabel.setText(simulator_voltage+" V");
+        simulatorPowerValueLabel.setText(simulator_power+" kW");
+    }
     public void display() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setup();;
+        this.setup();
+        ;
         frame.setSize(1200, 800);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-        mainPanel.add(inputPanel,BorderLayout.CENTER);
+        mainPanel.add(inputPanel, BorderLayout.CENTER);
         frame.add(mainPanel);
     }
 
     public Views() {
         // super(new GridLayout(3,4));
-        
 
     }
-    public JPanel getControlPanel()
-    {
+
+    public JPanel getControlPanel() {
         return controlPanel;
     }
+
     public void setupControlPanel() {
-        mainPanel.add(controlPanel,BorderLayout.NORTH);
+        mainPanel.add(controlPanel, BorderLayout.NORTH);
         controlPanel.add(buttonPause);
         controlPanel.add(targetIPLabel);
         controlPanel.add(targetIPInput);
@@ -88,6 +122,18 @@ public class Views {
         inputPanel.add(targetVarValueLabel);
         inputPanel.add(varValueLabel);
         inputPanel.add(targetVarValueInput);
+
+        inputPanel.add(simulatorTorqueLabel);
+        inputPanel.add(simulatorTorqueValueLabel);
+        inputPanel.add(simulatorSpeedLabel);
+        inputPanel.add(simulatorSpeedValueLabel);
+        inputPanel.add(simulatorVoltageLabel);
+        inputPanel.add(simulatorVoltageValueLabel);
+        inputPanel.add(simulatorCurrentLabel);
+        inputPanel.add(simulatorCurrentValueLabel);
+        inputPanel.add(simulatorPowerLabel);
+        inputPanel.add(simulatorPowerValueLabel);
+
         inputPanel.setBackground(Color.GRAY);
         targetIPInput.setText("http://192.168.214.1/soap/opcxml/");
 
@@ -107,6 +153,7 @@ public class Views {
         System.err.println(this.targetVarNameInput.getText());
         return this.targetVarNameInput.getText();
     }
+
     public String getTargetVarValue() {
         System.err.println(this.targetVarValueInput.getText());
         return this.targetVarValueInput.getText();

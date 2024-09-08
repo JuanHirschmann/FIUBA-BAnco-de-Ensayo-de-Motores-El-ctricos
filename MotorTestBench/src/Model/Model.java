@@ -1,12 +1,20 @@
 package Model;
 
 import java.net.ConnectException;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.xml.namespace.QName;
 import static Model.Constants.VAR_PATH;
-import static Model.Constants.TEST_VAR;
-import static Model.Constants.RUN;
-import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
-import static Model.Constants.NEW_SPEED_SETPOINT_LOAD_AXIS;
+//import static Model.Constants.TEST_VAR;
+import static Model.Constants.TORQUE_SETPOINT;
+//import static Model.Constants.RUN;
+import static Model.Constants.SOFTWARE_KILLSWITCH;
+import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
+import static Model.Constants.ENABLE_SIMULATOR_AXIS;
+//import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
+//import static Model.Constants.NEW_SPEED_SETPOINT_LOAD_AXIS;
+import static Model.Constants.OPERATION_MODE;
 
 import org.opcfoundation.webservices.XMLDA._1_0.Browse;
 import org.opcfoundation.webservices.XMLDA._1_0.BrowseElement;
@@ -28,7 +36,7 @@ import org.opcfoundation.webservices.XMLDA._1_0.WriteResponse;
 public class Model {
 
     org.opcfoundation.webservices.XMLDA._1_0.ServiceStub mySimotionWebService;
-
+    
     /**
      * @param args
      */
@@ -152,30 +160,133 @@ public class Model {
         }
     }
 
-    public String readTestVar() throws ConnectException
-    {
-        return readVar(VAR_PATH, TEST_VAR);
+    /*
+     * public String readTestVar() throws ConnectException
+     * {
+     * return readVar(VAR_PATH, TEST_VAR);
+     * }
+     * 
+     * public String readRunVar() throws ConnectException
+     * {
+     * return readVar(VAR_PATH, TEST_VAR);
+     * }
+     * public void setLoadAxisSpeed(String speedSetpoint) throws ConnectException
+     * {
+     * writeVar(speedSetpoint,VAR_PATH, LOAD_AXIS_SPEED_SETPOINT);
+     * writeVar("True",VAR_PATH, NEW_SPEED_SETPOINT_LOAD_AXIS);
+     * }
+     * public String readMotorLoadAxisSpeed() throws ConnectException
+     * {
+     * return readVar(VAR_PATH, TEST_VAR);
+     * }
+     */
+    /*
+     * public void run() throws ConnectException
+     * {
+     * writeVar("True",VAR_PATH, RUN);
+     * }
+     * public void stop() throws ConnectException
+     * {
+     * writeVar("False",VAR_PATH, RUN);
+     * }
+     */
+    /**
+     * Sends emergency stop signal to PLC.
+     * 
+     * @throws ConnectException
+     */
+    public void emergencyStop() throws ConnectException {
+        writeVar("TRUE", VAR_PATH, SOFTWARE_KILLSWITCH);
     }
-    
-    public String readRunVar() throws ConnectException
-    {
-        return readVar(VAR_PATH, TEST_VAR);
+
+    /**
+     * Releases emergency stop signal from PLC.
+     * 
+     * @throws ConnectException
+     */
+    public void realeaseEmergency() throws ConnectException {
+        writeVar("FALSE", VAR_PATH, SOFTWARE_KILLSWITCH);
     }
-    public void setLoadAxisSpeed(String speedSetpoint) throws ConnectException
-    {
-        writeVar(speedSetpoint,VAR_PATH, LOAD_AXIS_SPEED_SETPOINT);
-        writeVar("True",VAR_PATH, NEW_SPEED_SETPOINT_LOAD_AXIS);
+
+    /**
+     * Changes Active Line Module state.
+     * 
+     * @param state if true linemodule will be enabled, if false it will be
+     *              disabled.
+     * @throws ConnectException
+     */
+    private void enableLineModule(boolean state) throws ConnectException {
+        if (state) {
+            writeVar("TRUE", VAR_PATH, ENABLE_ACTIVE_LINEMODULE);
+        } else {
+            writeVar("FALSE", VAR_PATH, ENABLE_ACTIVE_LINEMODULE);
+        }
     }
-    public String readMotorLoadAxisSpeed() throws ConnectException
-    {
-        return readVar(VAR_PATH, TEST_VAR);
+
+    /**
+     * Changes simulator axis enable state
+     * 
+     * @param state if true axis will be enabled, if false it will be disabled.
+     *              This method doesn't check current axis state or line module
+     *              state.
+     * @throws ConnectException
+     */
+    private void enableSimulatorAxis(boolean state) throws ConnectException {
+        if (state) {
+            writeVar("TRUE", VAR_PATH, ENABLE_SIMULATOR_AXIS);
+        } else {
+            writeVar("FALSE", VAR_PATH, ENABLE_SIMULATOR_AXIS);
+        }
     }
-    public void run() throws ConnectException
-    {
-        writeVar("True",VAR_PATH, RUN);
+
+    /**
+     * Sets controller in RUN mode
+     * 
+     * @throws ConnectException
+     */
+    public void controllerOn() throws ConnectException {
+
+        writeVar("_RUN", VAR_PATH, OPERATION_MODE);
     }
-    public void stop() throws ConnectException
-    {
-        writeVar("False",VAR_PATH, RUN);
+
+    /**
+     * Sets controller in STOP mode
+     * 
+     * @throws ConnectException
+     */
+    public void controllerOff() throws ConnectException {
+
+        writeVar("_STOP", VAR_PATH, OPERATION_MODE);
     }
+
+    /**
+     * Enables line module and simulator axis, expects to have a delay between both
+     * events programmed on PLC side
+     * 
+     * @throws ConnectException
+     */
+    public void powerOn() throws ConnectException {
+        this.enableLineModule(true);
+        this.enableSimulatorAxis(true);
+    }
+
+    /**
+     * Disables simulator axis and shutdowns line module
+     * 
+     * @throws ConnectException
+     */
+    public void powerOff() throws ConnectException {
+        this.enableSimulatorAxis(true);
+        this.enableLineModule(true);
+    }
+
+    /**
+     * Sets user defined setpoint, doesn't check for new command flag
+     * 
+     * @param torque_setpoint Torque setpoint in Nm
+     */
+    public void setTorqueSetpoint(Float torque_setpoint) throws ConnectException {
+        writeVar(torque_setpoint.toString(), VAR_PATH, TORQUE_SETPOINT);
+    }
+
 }
