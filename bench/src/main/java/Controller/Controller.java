@@ -28,6 +28,7 @@ import static Model.Constants.READ_VARIABLE_BUTTON_LABEL;
 import static Model.Constants.START_BUTTON_LABEL;
 import static Model.Constants.VAR_PATH;
 import static Model.Constants.WRITE_VARIABLE_BUTTON_LABEL;
+import static Model.Constants.GRAPH_UPDATE_RATIO;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,60 +48,60 @@ public class Controller {
 
     private ArrayList<ArrayList<String>> measurements = new ArrayList<ArrayList<String>>();
     private Timer variable_poll_timer = new Timer();
-
+    private String[] measured_simulator_torque = new String[GRAPH_UPDATE_RATIO];
+    private String[] measured_simulator_speed = new String[GRAPH_UPDATE_RATIO];
+    private String[] measured_simulator_voltage = new String[GRAPH_UPDATE_RATIO];
+    private String[] measured_simulator_current = new String[GRAPH_UPDATE_RATIO];
+    private String[] measured_simulator_power = new String[GRAPH_UPDATE_RATIO];
+    private long[] timestamp = new long[GRAPH_UPDATE_RATIO];
+    private int index = 0;
 
     private class updateMeasurements implements Runnable {
 
         public void run() {
-            System.out.println("Mediciones actualizadas");
             Random rand = new Random();
-            String measured_simulator_torque;
-            String measured_simulator_speed;
-            String measured_simulator_voltage;
-            String measured_simulator_current;
-            String measured_simulator_power;
-            LocalDateTime now = LocalDateTime.now();
-            // Define the format
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-            String timestamp = now.format(formatter);
+            
             try {
 
-                // TODO conseguir el timestamp del PLC, probablemente sea mas preciso que la computadora
-                measured_simulator_torque = model.readVar(VAR_PATH, MEASURED_SIMULATOR_TORQUE);
-                measured_simulator_speed = model.readVar(VAR_PATH, MEASURED_SIMULATOR_SPEED);
-                measured_simulator_voltage = String.valueOf(0);
-                measured_simulator_current = String.valueOf(0);
-                measured_simulator_power = String.valueOf(0);
+                measured_simulator_torque[index] = model.readVar(VAR_PATH, MEASURED_SIMULATOR_TORQUE);
+                measured_simulator_speed[index] = model.readVar(VAR_PATH, MEASURED_SIMULATOR_SPEED);
+                measured_simulator_voltage[index] = String.valueOf(0);
+                measured_simulator_current[index] = String.valueOf(0);
+                measured_simulator_power[index] = String.valueOf(0);
+                timestamp[index]=System.currentTimeMillis();
 
             } catch (Exception e) {
                 /*
-                 * view.updateMeasurements(String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()));
-                 */
-                measured_simulator_torque = "--";
-                measured_simulator_speed = "--";
-                measured_simulator_voltage = "--";
-                measured_simulator_current = "--";
-                measured_simulator_power = "--";
+                    * view.updateMeasurements(String.valueOf(rand.nextFloat()),
+                    * String.valueOf(rand.nextFloat()),
+                    * String.valueOf(rand.nextFloat()),
+                    * String.valueOf(rand.nextFloat()),
+                    * String.valueOf(rand.nextFloat()));
+                    */
+                /* measured_simulator_torque[index] = "--";
+                measured_simulator_speed[index] = "--";
+                measured_simulator_voltage[index] = "--";
+                measured_simulator_current[index] = "--";
+                measured_simulator_power[index] = "--"; */
 
-                view.updateMeasurements("--",
-                        "--",
-                        "--",
-                        "--",
-                        "--");
+                measured_simulator_torque[index] = String.valueOf(rand.nextFloat()+1);
+                measured_simulator_speed[index] = String.valueOf(rand.nextFloat()+2);
+                measured_simulator_voltage[index] = String.valueOf(rand.nextFloat()+3);
+                measured_simulator_current[index] = String.valueOf(rand.nextFloat()-1);
+                measured_simulator_power[index] = String.valueOf(rand.nextFloat()-2);
+                timestamp[index]=System.currentTimeMillis();
             }
-            ArrayList<String> current_measurement = new ArrayList<String>();
-            current_measurement.add(timestamp);
-            current_measurement.add(measured_simulator_torque);
-            current_measurement.add(measured_simulator_speed);
-            current_measurement.add(measured_simulator_voltage);
-            current_measurement.add(measured_simulator_current);
-            current_measurement.add(measured_simulator_power);
-            System.err.println(current_measurement);
-
+            index++;
+            if (index>GRAPH_UPDATE_RATIO-1) {
+                view.updateGraphMeasurements(timestamp,
+                    measured_simulator_torque,
+                    measured_simulator_speed,
+                    measured_simulator_current,
+                    measured_simulator_voltage,
+                    measured_simulator_power);
+                index=0;
+            }
+            
             // model.
             // readVar(ENABLE_SIMULATOR_AXIS, OPERATION_MODE);
         }
@@ -108,7 +109,6 @@ public class Controller {
     }
 
     ScheduledExecutorService timer = Executors.newScheduledThreadPool(1);
-    
 
     public Controller(Model model, Views view) {
         this.model = model;
@@ -261,7 +261,7 @@ public class Controller {
             } else if (POWER_ON_BUTTON_LABEL.equals(cmd)) {
 
                 // variable_poll_timer.schedule(new UpdateMeasurements(), 0, 1000);
-                timer.scheduleAtFixedRate(new updateMeasurements(), 0, 20, TimeUnit.MILLISECONDS);
+                timer.scheduleAtFixedRate(new updateMeasurements(), 0, 50, TimeUnit.MILLISECONDS);
                 System.err.println("estoy en potencia");
                 try {
 
