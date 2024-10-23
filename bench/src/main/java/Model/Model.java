@@ -10,6 +10,8 @@ import static Model.Constants.VAR_PATH;
 import static Model.Constants.TORQUE_SETPOINT;
 //import static Model.Constants.RUN;
 import static Model.Constants.SOFTWARE_KILLSWITCH;
+import static Model.Constants.SOFTWARE_START;
+import static Model.Constants.SOFTWARE_STOP;
 import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
 import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 //import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
@@ -36,7 +38,7 @@ import org.opcfoundation.webservices.XMLDA._1_0.WriteResponse;
 public class Model {
 
     org.opcfoundation.webservices.XMLDA._1_0.ServiceStub mySimotionWebService;
-    
+
     /**
      * @param args
      */
@@ -268,6 +270,27 @@ public class Model {
     public void powerOn() throws ConnectException {
         this.enableLineModule(true);
         this.enableSimulatorAxis(true);
+    }
+
+    /**
+     * Disables simulator axis and shutdowns line module
+     * 
+     * @throws ConnectException
+     */
+    public void stop() throws ConnectException {
+        
+        writeVar("TRUE", VAR_PATH, SOFTWARE_STOP);
+        writeVar("FALSE", VAR_PATH, SOFTWARE_START);
+    }
+
+    /**
+     * Disables simulator axis and shutdowns line module
+     * 
+     * @throws ConnectException
+     */
+    public void start() throws ConnectException {
+        writeVar("FALSE", VAR_PATH, SOFTWARE_STOP);
+        writeVar("TRUE", VAR_PATH, SOFTWARE_START);
     }
 
     /**

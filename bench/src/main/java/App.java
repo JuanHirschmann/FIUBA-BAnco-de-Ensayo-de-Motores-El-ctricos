@@ -1,17 +1,17 @@
 
-
 import javax.swing.JPanel;
 
 import Controller.Controller;
 import Model.Model;
 import Views.Views;
+
 public class App {
 
     public static void main(String[] args) {
         Model model = new Model();
         Views view = new Views();
-        Controller controller=new Controller(model, view);
-        
+        Controller controller = new Controller(model, view);
+
         JPanel controlPanel = view.getControlPanel();
         controller.setupPanel(controlPanel);
         view.setupControlPanel();
