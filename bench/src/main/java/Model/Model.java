@@ -278,8 +278,7 @@ public class Model {
      * @throws ConnectException
      */
     public void stop() throws ConnectException {
-        
-        writeVar("TRUE", VAR_PATH, SOFTWARE_STOP);
+
         writeVar("FALSE", VAR_PATH, SOFTWARE_START);
     }
 
@@ -288,8 +287,11 @@ public class Model {
      * 
      * @throws ConnectException
      */
+    // TODO: esto tarda una barbaridad y se cuelga. Implementar el reset de Software
+    // stop en PLC
     public void start() throws ConnectException {
-        writeVar("FALSE", VAR_PATH, SOFTWARE_STOP);
+        // TODO Meter un retardo de 10ms
+
         writeVar("TRUE", VAR_PATH, SOFTWARE_START);
     }
 
@@ -301,6 +303,7 @@ public class Model {
     public void powerOff() throws ConnectException {
         this.enableSimulatorAxis(true);
         this.enableLineModule(true);
+        writeVar("_STOP", VAR_PATH, OPERATION_MODE);
     }
 
     /**

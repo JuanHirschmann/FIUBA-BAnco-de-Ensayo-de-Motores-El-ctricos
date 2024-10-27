@@ -1,5 +1,6 @@
 package Views;
 
+import static Model.Constants.CSV_FILEPATH;
 import static Model.Constants.DEFAULT_SERVER_ADDRESS;
 import static Model.Constants.GRAPH_BUFFER_SIZE;
 import static Model.Constants.WRITE_CSV;
@@ -10,7 +11,8 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.net.ConnectException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,20 +24,18 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
-import org.jfree.data.category.CategoryDataset;
-import org.jfree.data.general.Dataset;
-import org.jfree.data.time.Millisecond;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import Model.Constants.commands;
+
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -66,41 +66,38 @@ public class Views {
     JTextField targetVarPathInput = new JTextField(10);
     JLabel targetVarValueLabel = new JLabel("VarValue");
     JTextField targetVarValueInput = new JTextField(10);
-    MeasurementVector measurements;
+    // MeasurementVector measurements;
+    
     // Medicion de variables
-
-    JLabel simulatorTorqueLabel = new JLabel("Torque en eje simulador: ");
-    JLabel simulatorSpeedLabel = new JLabel("Velocidad en eje simulador: ");
-    JLabel simulatorVoltageLabel = new JLabel("Tensión en eje simulador: ");
-    JLabel simulatorCurrentLabel = new JLabel("Corriente en eje simulador: ");
-    JLabel simulatorPowerLabel = new JLabel("Potencia en eje simulador: ");
-    JLabel simulatorTorqueValueLabel = new JLabel("-- Nm");
-    JLabel simulatorSpeedValueLabel = new JLabel("-- RPM");
-    JLabel simulatorVoltageValueLabel = new JLabel("-- V");
-    JLabel simulatorCurrentValueLabel = new JLabel("-- A");
-    JLabel simulatorPowerValueLabel = new JLabel("-- kW");
+    JLabel simulatorTorqueLabel = new JLabel(commands.TORQUE.displayName+": ");
+    JLabel simulatorSpeedLabel = new JLabel(commands.SPEED.displayName+": ");
+    JLabel simulatorVoltageLabel = new JLabel(commands.VOLTAGE.displayName+": ");
+    JLabel simulatorCurrentLabel = new JLabel(commands.CURRENT.displayName+": ");
+    JLabel simulatorPowerLabel = new JLabel(commands.POWER.displayName+": ");
+    
+    //Map<String, JLabel> measuredVariables=new HashMap<>();
+    JLabel simulatorTorqueValueLabel = new JLabel("-- "+commands.TORQUE.displayUnit);
+    JLabel simulatorSpeedValueLabel = new JLabel("-- "+commands.SPEED.displayUnit);
+    JLabel simulatorVoltageValueLabel = new JLabel("-- "+commands.VOLTAGE.displayUnit);
+    JLabel simulatorCurrentValueLabel = new JLabel("-- "+commands.CURRENT.displayUnit);
+    JLabel simulatorPowerValueLabel = new JLabel("-- "+commands.POWER.displayUnit);
+    
     JButton startPlotButton = new JButton("Gráfico");
     JButton saveCSVButton = new JButton(WRITE_CSV);
 
     // Grafico
     XYSeriesCollection dataset = new XYSeriesCollection();
-    XYSeries torque_data = new XYSeries("Torque");
-    XYSeries speed_data = new XYSeries("Speed");
-    XYSeries voltage_data = new XYSeries("Voltage");
-    XYSeries power_data = new XYSeries("Power");
-    XYSeries current_data = new XYSeries("Current");
-
+    XYSeries torque_data = new XYSeries(commands.TORQUE.seriesName);
+    XYSeries speed_data = new XYSeries(commands.SPEED.seriesName);
+    XYSeries voltage_data = new XYSeries(commands.VOLTAGE.seriesName);
+    XYSeries power_data = new XYSeries(commands.POWER.seriesName);
+    XYSeries current_data = new XYSeries(commands.CURRENT.seriesName);
+   
     // Mediciones
-
-    private String[] measured_simulator_torque = new String[GRAPH_BUFFER_SIZE];
-    private String[] measured_simulator_speed = new String[GRAPH_BUFFER_SIZE];
-    private String[] measured_simulator_voltage = new String[GRAPH_BUFFER_SIZE];
-    private String[] measured_simulator_current = new String[GRAPH_BUFFER_SIZE];
-    private String[] measured_simulator_power = new String[GRAPH_BUFFER_SIZE];
-    private long[] timestamp = new long[GRAPH_BUFFER_SIZE];
-    private int measurement_buffer_index = 0;
-    ScheduledExecutorService measurementPollTimer = Executors.newScheduledThreadPool(20);
-
+    private MeasurementBuffer measurementsBufferedValues = new MeasurementBuffer();
+    ScheduledExecutorService measurementPollTimer = Executors.newScheduledThreadPool(40);
+    onScreenMeasurements displayedMeasurements= new onScreenMeasurements();
+    
     /**
      * Actualiza las mediciones en pantalla, agrega la unidad de medida al final de
      * la
@@ -113,16 +110,9 @@ public class Views {
      * @param simulator_power   Potencia medida en W
      */
 
-    public void updateMeasurements(long timestamp_value, String simulator_torque, String simulator_speed,
-            String simulator_current,
-            String simulator_voltage, String simulator_power) {
-        timestamp[measurement_buffer_index] = timestamp_value;
-        measured_simulator_torque[measurement_buffer_index] = simulator_torque;
-        measured_simulator_speed[measurement_buffer_index] = simulator_speed;
-        measured_simulator_voltage[measurement_buffer_index] = simulator_voltage;
-        measured_simulator_current[measurement_buffer_index] = simulator_current;
-        measured_simulator_power[measurement_buffer_index] = simulator_power;
-        measurement_buffer_index++;
+    public void updateMeasurements(long timestamp_value, String measured_value, String var_name) {
+
+        measurementsBufferedValues.addValue(var_name, Float.valueOf(measured_value), timestamp_value);
         /*
          * simulatorTorqueValueLabel.setText(simulator_torque + " Nm");
          * simulatorSpeedValueLabel.setText(simulator_speed + " RPM");
@@ -133,47 +123,37 @@ public class Views {
     }
 
     private class updateGraphMeasurements implements Runnable {
-
         public void run() {
-            float avgTorque = 0;
-            float avgSpeed = 0;
-            float avgCurrent = 0;
-            float avgVoltage = 0;
-            float avgPower = 0;
-            float torque = 0;
-            float speed = 0;
-            float current = 0;
-            float voltage = 0;
-            float power = 0;
+            for (String key : measurementsBufferedValues.getKeySet()) {
+                float average_value=0;
+                ArrayList<Float> value = new ArrayList<Float>(measurementsBufferedValues.getBufferedData(key));
+                ArrayList<Float> timestamp = new ArrayList<Float>(
+                        measurementsBufferedValues.getBufferedDataTimestamp(key));
+                for (int i = 0; i < value.size(); i++) {
+                    dataset.getSeries(key).add(timestamp.get(i), value.get(i));
+                    average_value+=value.get(i);
+                }
+                average_value/=value.size();
+                displayedMeasurements.addMeasurement(key,average_value);
 
-            for (int i = 0; i < measurement_buffer_index; i++) {
-                torque = Float.valueOf(measured_simulator_torque[i]);
-                speed = Float.valueOf(measured_simulator_speed[i]);
-                current = Float.valueOf(measured_simulator_current[i]);
-                voltage = Float.valueOf(measured_simulator_voltage[i]);
-                power = Float.valueOf(measured_simulator_power[i]);
-                dataset.getSeries("Torque").add(timestamp[i], torque);
-                avgTorque += torque;
-                dataset.getSeries("Speed").add(timestamp[i], speed);
-                avgSpeed += speed;
-                dataset.getSeries("Current").add(timestamp[i], current);
-                avgCurrent += current;
-                dataset.getSeries("Voltage").add(timestamp[i], voltage);
-                avgVoltage += voltage;
-
-                dataset.getSeries("Power").add(timestamp[i], power);
-                avgPower += power;
             }
-
-            System.err.println(timestamp[measurement_buffer_index - 1] - timestamp[0]);
-            ;
-            simulatorTorqueValueLabel.setText(String.format("%.3g%n",avgTorque / measurement_buffer_index) + " Nm");
-            simulatorSpeedValueLabel.setText(String.format("%.3g%n",avgSpeed / measurement_buffer_index) + " RPM");
-            simulatorCurrentValueLabel.setText(String.format("%.3g%n",avgCurrent / measurement_buffer_index) + " A");
-            simulatorVoltageValueLabel.setText(String.format("%.3g%n",avgVoltage / measurement_buffer_index) + " Vrms");
-            simulatorPowerValueLabel.setText(String.format("%.3g%n",avgPower / measurement_buffer_index) + " kW");
-
-            measurement_buffer_index = 0;
+            // Esto a lo mejor es un poquito lento
+            measurementsBufferedValues.clearBuffer();
+            // TODO Implementar la lógica de actualización del texto en pantalla
+            /*
+             * simulatorTorqueValueLabel.setText(String.format("%.3g%n",avgTorque /
+             * measurement_buffer_index) + " Nm");
+             * simulatorSpeedValueLabel.setText(String.format("%.3g%n",avgSpeed /
+             * measurement_buffer_index) + " RPM");
+             * simulatorCurrentValueLabel.setText(String.format("%.3g%n",avgCurrent /
+             * measurement_buffer_index) + " A");
+             * simulatorVoltageValueLabel.setText(String.format("%.3g%n",avgVoltage /
+             * measurement_buffer_index) + " Vrms");
+             * simulatorPowerValueLabel.setText(String.format("%.3g%n",avgPower /
+             * measurement_buffer_index) + " kW");
+             * 
+             * measurement_buffer_index = 0;
+             */
         }
     }
 
@@ -197,7 +177,11 @@ public class Views {
     }
 
     public Views() {
-
+        this.dataset.addSeries(torque_data);
+        this.dataset.addSeries(speed_data);
+        this.dataset.addSeries(voltage_data);
+        this.dataset.addSeries(current_data);
+        this.dataset.addSeries(power_data);
     }
 
     public JPanel getControlPanel() {
@@ -238,7 +222,14 @@ public class Views {
         inputPanel.add(varValueLabel);
         inputPanel.add(targetVarValueInput);
 
-        inputPanel.add(simulatorTorqueLabel);
+
+        displayedMeasurements.addMeasuredVariable(commands.TORQUE.seriesName);
+        displayedMeasurements.addMeasuredVariable(commands.SPEED.seriesName);
+        displayedMeasurements.addMeasuredVariable(commands.VOLTAGE.seriesName);
+        displayedMeasurements.addMeasuredVariable(commands.CURRENT.seriesName);
+        displayedMeasurements.addMeasuredVariable(commands.POWER.seriesName);
+        displayedMeasurements.setMeasurements(inputPanel);
+        /* inputPanel.add(simulatorTorqueLabel);
         inputPanel.add(simulatorTorqueValueLabel);
         inputPanel.add(simulatorSpeedLabel);
         inputPanel.add(simulatorSpeedValueLabel);
@@ -247,19 +238,13 @@ public class Views {
         inputPanel.add(simulatorCurrentLabel);
         inputPanel.add(simulatorCurrentValueLabel);
         inputPanel.add(simulatorPowerLabel);
-        inputPanel.add(simulatorPowerValueLabel);
+        inputPanel.add(simulatorPowerValueLabel); */
         inputPanel.add(startPlotButton);
         inputPanel.add(saveCSVButton);
         startPlotButton.addActionListener(new ButtonHandler());
         saveCSVButton.addActionListener(new ButtonHandler());
         inputPanel.setBackground(Color.GRAY);
         targetIPInput.setText(DEFAULT_SERVER_ADDRESS);
-
-        this.dataset.addSeries(torque_data);
-        this.dataset.addSeries(speed_data);
-        this.dataset.addSeries(voltage_data);
-        this.dataset.addSeries(current_data);
-        this.dataset.addSeries(power_data);
 
     }
 
@@ -303,30 +288,32 @@ public class Views {
         java.util.List<String> csv = new ArrayList<>();
         int seriesCount = this.dataset.getSeriesCount();
         int itemCount = this.dataset.getItemCount(0);
-        String header = "Time,";
+        String header = "";
         String aux = "";
-
+        System.out.println(seriesCount);
+        System.out.println(itemCount);
         for (int j = 0; j < itemCount; j++) {
             for (int i = 0; i < seriesCount; i++) {
                 Comparable key = this.dataset.getSeriesKey(i);
                 Number x = this.dataset.getX(i, j);
                 Number y = this.dataset.getY(i, j);
-                if (j == 0) {
-                    header += String.format("%s,", key);
-                }
-                if (i == 0) {
+                //if (j == 0) {
+                header+="Tiempo [ms],";
+                header += String.format("%s,", key);
+                //}
+                //if (i == 0) {
 
                     aux += String.format("%s,", x);
-                }
-                
+                //}
+
                 aux += String.format("%s,", y);
             }
             if (j == 0) {
-                
+
                 csv.add(header);
             }
             csv.add(aux);
-            aux="";
+            aux = "";
         }
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename + ".csv"));) {
@@ -337,6 +324,7 @@ public class Views {
         } catch (IOException e) {
             throw new IllegalStateException("Cannot write dataset", e);
         }
+        System.out.println("exporte como csv");
     }
 
     private class ButtonHandler implements ActionListener {
@@ -345,11 +333,14 @@ public class Views {
             String cmd = event.getActionCommand();
             System.err.println(cmd);
             if ("Gráfico".equals(cmd)) {
-                measurementPollTimer.scheduleAtFixedRate(new updateGraphMeasurements(), 0, 500, TimeUnit.MILLISECONDS);
-
-            } else if ("CSV".equals(cmd)) {
-                storeDataSet("C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\archivo");
-
+                measurementPollTimer.scheduleAtFixedRate(new updateGraphMeasurements(), 1000, 500, TimeUnit.MILLISECONDS);
+                
+            } else if (WRITE_CSV.equals(cmd)) {
+                String pattern = "yyyyMMdd HHmmss";
+                DateFormat df = new SimpleDateFormat(pattern);
+                Date today = Calendar.getInstance().getTime();
+                String todayAsString = df.format(today);
+                storeDataSet(CSV_FILEPATH+todayAsString);
             }
 
         }

@@ -3,6 +3,7 @@ package Controller;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import Model.Constants.commands;
 import Model.Model;
 import Views.Views;
 import java.awt.event.ActionEvent;
@@ -16,6 +17,7 @@ import java.util.Random;
 
 import static Model.Constants.CONNECT_BUTTON_LABEL;
 import static Model.Constants.EMERGENCY_STOP_BUTTON_LABEL;
+import static Model.Constants.MEASURED_SIMULATOR_CURRENT;
 import static Model.Constants.MEASURED_SIMULATOR_SPEED;
 import static Model.Constants.MEASURED_SIMULATOR_TORQUE;
 import static Model.Constants.MEASURED_SIMULATOR_VOLTAGE;
@@ -39,37 +41,34 @@ public class Controller {
     private JButton buttonConnect = new JButton(CONNECT_BUTTON_LABEL);// Conecta a la IP objetivo
     private JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo TODO
     private JButton shutdownButton = new JButton(SHUTDOWN_BUTTON_LABEL);
-
-    String torqueMeasurement;
-    String speedMeasurement;
-    String voltageMeasurement;
-    String currentMeasurement;
-    String powerMeasurement;
-    long timestamp;
-    private long measurement_start_time = 0;
     ScheduledExecutorService timer = Executors.newScheduledThreadPool(1);
+    ScheduledExecutorService timer1 = Executors.newScheduledThreadPool(1);
+    ScheduledExecutorService timer2 = Executors.newScheduledThreadPool(1);
+    ScheduledExecutorService timer3 = Executors.newScheduledThreadPool(1);
+    ScheduledExecutorService timer4 = Executors.newScheduledThreadPool(1);
 
+    // TODO: Ejecutar con un temporizador por variable, considerar un tiempo de
+    // muestra de 60ms.
+    // TODO: Agregar el setpoint de torque
     private class updateMeasurements implements Runnable {
+        private String measurement;
+        private long timestamp;
+        private long measurement_start_time = 0;
+        private commands command;
+        updateMeasurements(commands command) {
+            this.command=command;
+        };
 
         public void run() {
+            // Esto termina tienendo un lag de 200ms o mas
             Random rand = new Random();
             if (measurement_start_time == 0) {
-                measurement_start_time = System.currentTimeMillis();
+                this.measurement_start_time = System.currentTimeMillis();
             }
-            timestamp = System.currentTimeMillis() - measurement_start_time;
+            this.timestamp = System.currentTimeMillis() - measurement_start_time;
+            //System.out.println(timestamp);
             try {
-                // TODO Buffer interno en PLC, PLC procesa buffer externo, avisa cuando termino
-                // y le tiro los datos frescos.
-                // TODO implementar un keepalive timer y handles para desconexión del lado del
-                // plc.
-                // TODO implementar readcyclic ver algo más rápido.
-                // TODO un thread por medición?.
-                System.err.println("act");
-                torqueMeasurement = model.readVar(VAR_PATH, MEASURED_SIMULATOR_TORQUE);
-                speedMeasurement = model.readVar(VAR_PATH, MEASURED_SIMULATOR_SPEED);
-                voltageMeasurement = model.readVar(VAR_PATH, MEASURED_SIMULATOR_VOLTAGE);
-                speedMeasurement = model.readVar(VAR_PATH, MEASURED_SIMULATOR_SPEED);
-                powerMeasurement = model.readVar(VAR_PATH, MEASURED_SIMULATOR_POWER);
+                this.measurement = model.readVar(command.varPath, command.varName);
 
             } catch (Exception e) {
                 /*
@@ -87,27 +86,15 @@ public class Controller {
                  * measured_simulator_power[index] = "--";
                  */
 
-                torqueMeasurement = String.valueOf(timestamp / 1e4 + rand.nextFloat());
-                speedMeasurement = String.valueOf(20 * Math.cos(50.0 * timestamp / 1e3) + rand.nextFloat());
-                voltageMeasurement = String.valueOf(10 - 10 * Math.exp(-timestamp / 1e3 + rand.nextFloat()));
-                speedMeasurement = String
-                        .valueOf(5 * Math.cos(10.0 * timestamp / 1e4) - 20 * Math.exp(-timestamp / 1e3));
-                powerMeasurement = String.valueOf(timestamp / 1e4);
+                this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException exception) {
-                    System.out.println("got interrupted!");
+                    System.out.println("nit");
                 } // Simula demora en leer datos
 
             }
-            view.updateMeasurements(timestamp,
-                    torqueMeasurement,
-                    speedMeasurement,
-                    voltageMeasurement,
-                    speedMeasurement,
-                    powerMeasurement);
-            // model.
-            // readVar(ENABLE_SIMULATOR_AXIS, OPERATION_MODE);
+            view.updateMeasurements(timestamp,this.measurement,command.seriesName);
         }
 
     }
@@ -149,7 +136,6 @@ public class Controller {
         emergencyButton.addActionListener(new ButtonHandler());
         powerOnButton.addActionListener(new ButtonHandler());
         shutdownButton.addActionListener(new ButtonHandler());
-        startButton.addActionListener(new ButtonHandler());
 
     }
 
@@ -171,6 +157,10 @@ public class Controller {
                 }
             } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
                 timer.shutdown();
+                timer1.shutdown();
+                timer2.shutdown();
+                timer3.shutdown();
+                timer4.shutdown();
                 System.err.println("estoy en apagar");
                 try {
 
@@ -211,13 +201,18 @@ public class Controller {
                 }
             } else if (START_BUTTON_LABEL.equals(cmd)) {
                 System.err.println("estoy en iniciar");
-                timer.scheduleAtFixedRate(new updateMeasurements(), 0, 100, TimeUnit.MILLISECONDS);
                 startButton.setText(PAUSE_BUTTON_LABEL);
+                //Estos retardos tienen algo que ver con la desaparición de trazos en el gráfico en tiempo real
+                timer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 100, TimeUnit.MILLISECONDS);
+                timer1.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 8, 100, TimeUnit.MILLISECONDS);
+                timer2.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT), 16, 100, TimeUnit.MILLISECONDS);
+                timer3.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 32, 100, TimeUnit.MILLISECONDS);
+                timer4.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 64, 100, TimeUnit.MILLISECONDS);
                 try {
                     model.start();
                 } catch (Exception e) {
                     System.err.println("Tire error");
-
+                    
                     System.err.println(e.getMessage());
                     view.alert(e.getMessage());
                 }
