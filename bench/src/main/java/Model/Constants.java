@@ -7,11 +7,12 @@ public final class Constants {
     }
     public enum commands
     {
-        TORQUE(MEASURED_SIMULATOR_TORQUE,"Torque [Nm]","Nm"),
-        SPEED(MEASURED_SIMULATOR_SPEED,"Velocidad [RPM]","RPM"),
-        POWER(MEASURED_SIMULATOR_POWER,"Potencia activa [Kw]","kW"),
-        CURRENT(MEASURED_SIMULATOR_CURRENT,"Corriente absoluta [Arms]","Arms"),
-        VOLTAGE(MEASURED_SIMULATOR_VOLTAGE,"Tensión [Vrms]","Vrms");
+        TORQUE(MEASURED_SIMULATOR_TORQUE,"Torque","[Nm]"),
+        TORQUE_COMMAND("Torque comandado","Torque comandado","[Nm]"),
+        SPEED(MEASURED_SIMULATOR_SPEED,"Velocidad ","[RPM]"),
+        POWER(MEASURED_SIMULATOR_POWER,"Potencia activa","[kW]"),
+        CURRENT(MEASURED_SIMULATOR_CURRENT,"Corriente absoluta ","[Arms]"),
+        VOLTAGE(MEASURED_SIMULATOR_VOLTAGE,"Tensión ","[Vrms]");
         
         public final String varPath;
         public final String varName;
@@ -68,11 +69,13 @@ public final class Constants {
     public static final String PAUSE_BUTTON_LABEL = "Pausar ensayo";
     public static final String START_BUTTON_LABEL = "Iniciar ensayo";
     public static final String SHUTDOWN_BUTTON_LABEL = "Apagar";
-    
+    public static final String SAVE_CSV_BUTTON_LABEL = "Exportar curvas como CSV";
+    public static final String BROWSE_FILE_BUTTON_LABEL = "Importar curva...";
+    public static final String CSV_DELIMITER=",";
     public static final String WRITE_CSV="Exportar como CSV";
     public static final String READ_CSV="Importar CSV";
     // Se indexa como string glob/TORQUE_VALUES[0],glob/TORQUE_VALUES[1]...
-    
+    public static final String AVAILABLE_TORQUE_MODES[]={"Cupla en función del tiempo","Cupla en función de la velocidad"};
     public static final String DEFAULT_SERVER_ADDRESS = "http://192.168.214.1/soap/opcxml/";
     public static final int GRAPH_UPDATE_RATIO = 1;
     public static final int GRAPH_BUFFER_SIZE = 10000;
@@ -81,5 +84,25 @@ public final class Constants {
      * simulator_axis.actualTorque.value
      * simulator_axis.actorData.actualSpeed
      */
+    public enum testTypes
+    {
+        TORQUE_VS_SPEED("Cupla en función del tiempo"),
+        TORQUE_VS_TIME("Cupla en función de la velocidad");
+        public final String displayName;
+        /* commands(String path,String name,String displayName)
+        {
+            this.varPath=path;
+            this.varName=name;
+            this.displayName=displayName;
+        } */
+        testTypes(String name)
+        {
+            this.displayName=name;
+        }
+        @Override
+        public String toString() {
+            return this.displayName;
+        }
+    }
 }
 

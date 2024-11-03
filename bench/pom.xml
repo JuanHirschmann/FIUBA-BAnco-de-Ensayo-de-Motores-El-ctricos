@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>motor.test</groupId>
@@ -14,9 +14,18 @@
     </properties>
 
 
-
     <dependencies>
-    
+
+        <dependency>
+            <groupId>org.scilab.forge</groupId>
+            <artifactId>jlatexmath</artifactId>
+            <version>1.0.7</version>
+        </dependency>
+
+
+
+        
+
 
         <dependency>
             <groupId>org.jfree</groupId>
@@ -79,11 +88,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/src/main/resources/wsdl4j-1.5.1.jar</systemPath>
         </dependency>
-    
-      <dependency>
-        <groupId>org.scala-tools.testing</groupId>
-        <artifactId>specs_2.10</artifactId>
-        <version>1.6.9</version>
-      </dependency>
+
+        <dependency>
+            <groupId>org.scala-tools.testing</groupId>
+            <artifactId>specs_2.10</artifactId>
+            <version>1.6.9</version>
+        </dependency>
     </dependencies>
 </project>

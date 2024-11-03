@@ -1,5 +1,8 @@
 package Views;
 
+import static Model.Constants.AVAILABLE_TORQUE_MODES;
+import static Model.Constants.BROWSE_FILE_BUTTON_LABEL;
+import static Model.Constants.CSV_DELIMITER;
 import static Model.Constants.CSV_FILEPATH;
 import static Model.Constants.DEFAULT_SERVER_ADDRESS;
 import static Model.Constants.GRAPH_BUFFER_SIZE;
@@ -19,12 +22,18 @@ import java.util.concurrent.TimeUnit;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JFileChooser;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -35,69 +44,51 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import Model.Constants.commands;
+import Model.Constants.testTypes;
 
 import java.io.FileWriter;
 import java.io.IOException;
-
+import java.io.FileReader;
 import java.io.BufferedWriter;
+import java.io.BufferedReader;
+import org.scilab.forge.jlatexmath.TeXFormula;
 
 public class Views {
-    JFrame frame = new JFrame("Banco de ensayo - FIUBA");
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    JPanel controlPanel = new JPanel(new GridBagLayout());
-    JPanel inputPanel = new JPanel(new FlowLayout());
-    JLabel targetIPLabel = new JLabel("IP objetivo:");
-    JTextField targetIPInput = new JTextField(20);
-    JLabel speedTimeFunctionLabel = new JLabel("Función de velocidad en función del tiempo:");
-    JTextField speedTimeFunctionInput = new JTextField(20);
-    JLabel torqueTimeFunctionLabel = new JLabel("Función de cupla en función del tiempo:");
-    JTextField torqueTimeFunctionInput = new JTextField(20);
-    JLabel torqueSpeedFunctionLabel = new JLabel("Función de velocidad en función de la cupla:");
-    JTextField torqueSpeedFunctionInput = new JTextField(20);
-    JLabel startTimeLabel = new JLabel("Tiempo de inicio [s]:");
-    JTextField startTimeInput = new JTextField(10);
-    JLabel stopTimeLabel = new JLabel("Tiempo de fin [s]:");
-    JTextField stopTimeInput = new JTextField(10);
-    JLabel errorMsgLabel = new JLabel("");
-    JLabel varValueLabel = new JLabel("");
-    JLabel targetVarNameLabel = new JLabel("VarName");
-    JTextField targetVarNameInput = new JTextField(10);
-    JLabel targetVarPathLabel = new JLabel("VarPath");
-    JTextField targetVarPathInput = new JTextField(10);
-    JLabel targetVarValueLabel = new JLabel("VarValue");
-    JTextField targetVarValueInput = new JTextField(10);
-    // MeasurementVector measurements;
-    
-    // Medicion de variables
-    JLabel simulatorTorqueLabel = new JLabel(commands.TORQUE.displayName+": ");
-    JLabel simulatorSpeedLabel = new JLabel(commands.SPEED.displayName+": ");
-    JLabel simulatorVoltageLabel = new JLabel(commands.VOLTAGE.displayName+": ");
-    JLabel simulatorCurrentLabel = new JLabel(commands.CURRENT.displayName+": ");
-    JLabel simulatorPowerLabel = new JLabel(commands.POWER.displayName+": ");
-    
-    //Map<String, JLabel> measuredVariables=new HashMap<>();
-    JLabel simulatorTorqueValueLabel = new JLabel("-- "+commands.TORQUE.displayUnit);
-    JLabel simulatorSpeedValueLabel = new JLabel("-- "+commands.SPEED.displayUnit);
-    JLabel simulatorVoltageValueLabel = new JLabel("-- "+commands.VOLTAGE.displayUnit);
-    JLabel simulatorCurrentValueLabel = new JLabel("-- "+commands.CURRENT.displayUnit);
-    JLabel simulatorPowerValueLabel = new JLabel("-- "+commands.POWER.displayUnit);
-    
-    JButton startPlotButton = new JButton("Gráfico");
-    JButton saveCSVButton = new JButton(WRITE_CSV);
+    private JFrame frame = new JFrame("Banco de ensayo - FIUBA");
+    private JPanel mainPanel = new JPanel(new BorderLayout());
+    private JPanel controlPanel = new JPanel(new GridBagLayout());
+    private JPanel inputPanel = new JPanel(new FlowLayout());
+    private JLabel targetIPLabel = new JLabel("IP objetivo:");
+    private JTextField targetIPInput = new JTextField(20);
 
+    private LabeledInput startTime=new LabeledInput("Tiempo de inicio [s]:");
+    private LabeledInput stopTime=new LabeledInput("Tiempo de fin [s]:");
+    private JLabel errorMsgLabel = new JLabel("");
+
+    private JTextField filename = new JTextField(40);
+    // MeasurementVector measurements;
+
+    private JButton startPlotButton = new JButton("Gráfico");
+    private JButton saveCSVButton = new JButton(WRITE_CSV);
+    private JButton openFileButton = new JButton(BROWSE_FILE_BUTTON_LABEL);
+    private JComboBox<testTypes> torqueTestModeComboBox = new JComboBox<testTypes>();
     // Grafico
-    XYSeriesCollection dataset = new XYSeriesCollection();
-    XYSeries torque_data = new XYSeries(commands.TORQUE.seriesName);
-    XYSeries speed_data = new XYSeries(commands.SPEED.seriesName);
-    XYSeries voltage_data = new XYSeries(commands.VOLTAGE.seriesName);
-    XYSeries power_data = new XYSeries(commands.POWER.seriesName);
-    XYSeries current_data = new XYSeries(commands.CURRENT.seriesName);
-   
+    private XYSeriesCollection dataset = new XYSeriesCollection();
+    private XYSeries torque_data = new XYSeries(commands.TORQUE.seriesName);
+    private XYSeries speed_data = new XYSeries(commands.SPEED.seriesName);
+    private XYSeries voltage_data = new XYSeries(commands.VOLTAGE.seriesName);
+    private XYSeries power_data = new XYSeries(commands.POWER.seriesName);
+    private XYSeries current_data = new XYSeries(commands.CURRENT.seriesName);
+    private XYSeries torque_command = new XYSeries(commands.TORQUE_COMMAND.seriesName);
+
     // Mediciones
     private MeasurementBuffer measurementsBufferedValues = new MeasurementBuffer();
-    ScheduledExecutorService measurementPollTimer = Executors.newScheduledThreadPool(40);
-    onScreenMeasurements displayedMeasurements= new onScreenMeasurements();
-    
+    private ScheduledExecutorService measurementPollTimer = Executors.newScheduledThreadPool(40);
+    private onScreenMeasurements displayedMeasurements = new onScreenMeasurements();
+    private TorqueEquation torqueEquationText = new TorqueEquation();
+    private JLabel torqueEquation = new JLabel(torqueEquationText.toString());
+    private TorqueEquationParameters torqueEquationParameters =new TorqueEquationParameters();
+
     /**
      * Actualiza las mediciones en pantalla, agrega la unidad de medida al final de
      * la
@@ -113,47 +104,46 @@ public class Views {
     public void updateMeasurements(long timestamp_value, String measured_value, String var_name) {
 
         measurementsBufferedValues.addValue(var_name, Float.valueOf(measured_value), timestamp_value);
-        /*
-         * simulatorTorqueValueLabel.setText(simulator_torque + " Nm");
-         * simulatorSpeedValueLabel.setText(simulator_speed + " RPM");
-         * simulatorCurrentValueLabel.setText(simulator_current + " A");
-         * simulatorVoltageValueLabel.setText(simulator_voltage + " V");
-         * simulatorPowerValueLabel.setText(simulator_power + " kW");
-         */
     }
-
+    private class LabeledInput
+    {
+        JLabel inputLabel =new JLabel();
+        JTextField input=new JTextField(20);
+        LabeledInput(String label)
+        {
+            inputLabel.setText(label);
+        }
+        public void set(JPanel panel)
+        {
+            panel.add(inputLabel);
+            panel.add(input);
+        }
+        public void setVisible(boolean visible)
+        {
+            inputLabel.setVisible(visible);
+            input.setVisible(visible);
+        }
+        public String getValue()
+        {
+            return input.getText();
+        }
+    }
     private class updateGraphMeasurements implements Runnable {
         public void run() {
             for (String key : measurementsBufferedValues.getKeySet()) {
-                float average_value=0;
+                float average_value = 0;
                 ArrayList<Float> value = new ArrayList<Float>(measurementsBufferedValues.getBufferedData(key));
                 ArrayList<Float> timestamp = new ArrayList<Float>(
                         measurementsBufferedValues.getBufferedDataTimestamp(key));
                 for (int i = 0; i < value.size(); i++) {
                     dataset.getSeries(key).add(timestamp.get(i), value.get(i));
-                    average_value+=value.get(i);
+                    average_value += value.get(i);
                 }
-                average_value/=value.size();
-                displayedMeasurements.addMeasurement(key,average_value);
+                average_value /= value.size();
+                displayedMeasurements.addMeasurement(key, average_value);
 
             }
-            // Esto a lo mejor es un poquito lento
             measurementsBufferedValues.clearBuffer();
-            // TODO Implementar la lógica de actualización del texto en pantalla
-            /*
-             * simulatorTorqueValueLabel.setText(String.format("%.3g%n",avgTorque /
-             * measurement_buffer_index) + " Nm");
-             * simulatorSpeedValueLabel.setText(String.format("%.3g%n",avgSpeed /
-             * measurement_buffer_index) + " RPM");
-             * simulatorCurrentValueLabel.setText(String.format("%.3g%n",avgCurrent /
-             * measurement_buffer_index) + " A");
-             * simulatorVoltageValueLabel.setText(String.format("%.3g%n",avgVoltage /
-             * measurement_buffer_index) + " Vrms");
-             * simulatorPowerValueLabel.setText(String.format("%.3g%n",avgPower /
-             * measurement_buffer_index) + " kW");
-             * 
-             * measurement_buffer_index = 0;
-             */
         }
     }
 
@@ -182,6 +172,18 @@ public class Views {
         this.dataset.addSeries(voltage_data);
         this.dataset.addSeries(current_data);
         this.dataset.addSeries(power_data);
+        this.dataset.addSeries(torque_command);
+        this.displayedMeasurements.addMeasuredVariable(commands.TORQUE);
+        this.displayedMeasurements.addMeasuredVariable(commands.POWER);
+        this.displayedMeasurements.addMeasuredVariable(commands.VOLTAGE);
+        this.displayedMeasurements.addMeasuredVariable(commands.CURRENT);
+        this.displayedMeasurements.addMeasuredVariable(commands.SPEED);
+        this.displayedMeasurements.addMeasuredVariable(commands.TORQUE_COMMAND);
+        this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_SPEED);
+        this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_TIME);
+
+        // this.torqueEquation.setContent("$T(v)=A+Bv+Cv^2+D\\frac{dv}{dt}$");
+
     }
 
     public JPanel getControlPanel() {
@@ -204,45 +206,20 @@ public class Views {
     }
 
     private void setup() {
-        inputPanel.add(speedTimeFunctionLabel);
-        inputPanel.add(speedTimeFunctionInput);
-        inputPanel.add(torqueTimeFunctionLabel);
-        inputPanel.add(torqueTimeFunctionInput);
-        inputPanel.add(torqueSpeedFunctionLabel);
-        inputPanel.add(torqueSpeedFunctionInput);
-        inputPanel.add(startTimeLabel);
-        inputPanel.add(startTimeInput);
-        inputPanel.add(stopTimeLabel);
-        inputPanel.add(stopTimeInput);
-        inputPanel.add(targetVarNameLabel);
-        inputPanel.add(targetVarNameInput);
-        inputPanel.add(targetVarPathLabel);
-        inputPanel.add(targetVarPathInput);
-        inputPanel.add(targetVarValueLabel);
-        inputPanel.add(varValueLabel);
-        inputPanel.add(targetVarValueInput);
-
-
-        displayedMeasurements.addMeasuredVariable(commands.TORQUE.seriesName);
-        displayedMeasurements.addMeasuredVariable(commands.SPEED.seriesName);
-        displayedMeasurements.addMeasuredVariable(commands.VOLTAGE.seriesName);
-        displayedMeasurements.addMeasuredVariable(commands.CURRENT.seriesName);
-        displayedMeasurements.addMeasuredVariable(commands.POWER.seriesName);
+        inputPanel.add(torqueTestModeComboBox);
+        inputPanel.add(openFileButton);
+        inputPanel.add(filename);
+        inputPanel.add(torqueEquation);
+        startTime.set(inputPanel);
+        stopTime.set(inputPanel);
         displayedMeasurements.setMeasurements(inputPanel);
-        /* inputPanel.add(simulatorTorqueLabel);
-        inputPanel.add(simulatorTorqueValueLabel);
-        inputPanel.add(simulatorSpeedLabel);
-        inputPanel.add(simulatorSpeedValueLabel);
-        inputPanel.add(simulatorVoltageLabel);
-        inputPanel.add(simulatorVoltageValueLabel);
-        inputPanel.add(simulatorCurrentLabel);
-        inputPanel.add(simulatorCurrentValueLabel);
-        inputPanel.add(simulatorPowerLabel);
-        inputPanel.add(simulatorPowerValueLabel); */
+        torqueEquationParameters.setParameters(inputPanel);
         inputPanel.add(startPlotButton);
         inputPanel.add(saveCSVButton);
         startPlotButton.addActionListener(new ButtonHandler());
         saveCSVButton.addActionListener(new ButtonHandler());
+        openFileButton.addActionListener(new ButtonHandler());
+        torqueTestModeComboBox.addItemListener(new TestTypeHandler());
         inputPanel.setBackground(Color.GRAY);
         targetIPInput.setText(DEFAULT_SERVER_ADDRESS);
 
@@ -261,50 +238,58 @@ public class Views {
         return this.targetIPInput.getText();
     }
 
-    public String getTargetVarName() {
-        System.err.println(this.targetVarPathInput.getText());
-        return this.targetVarPathInput.getText();
-    }
-
-    public String getTargetVarPath() {
-        System.err.println(this.targetVarNameInput.getText());
-        return this.targetVarNameInput.getText();
-    }
-
-    public String getTargetVarValue() {
-        System.err.println(this.targetVarValueInput.getText());
-        return this.targetVarValueInput.getText();
-    }
-
-    public void setVarValue(String value) {
-        this.varValueLabel.setText(value);
-    }
-
     public void alert(String message) {
         errorMsgLabel.setText(message);
     }
 
+    private void plotCSV(String filepath) {
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] values = line.split(CSV_DELIMITER);
+                dataset.getSeries(commands.TORQUE_COMMAND.seriesName).add(Float.valueOf(values[0]),
+                        Float.valueOf(values[1]));
+
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot write dataset", e);
+        }
+
+    }
+
+    public void torqueVsTimeVisibility(boolean visible) {
+        startTime.setVisible(!visible);
+        stopTime.setVisible(!visible);
+        filename.setVisible(!visible);
+        openFileButton.setVisible(!visible);
+        torqueEquation.setVisible(visible);
+        torqueEquationParameters.setVisible(visible);
+        frame.getContentPane().revalidate();
+        frame.getContentPane().repaint();
+    }
+
     private void storeDataSet(String filename) {
-        java.util.List<String> csv = new ArrayList<>();
         int seriesCount = this.dataset.getSeriesCount();
         int itemCount = this.dataset.getItemCount(0);
         String header = "";
         String aux = "";
         System.out.println(seriesCount);
         System.out.println(itemCount);
+        java.util.List<String> csv = new ArrayList<>();
         for (int j = 0; j < itemCount; j++) {
             for (int i = 0; i < seriesCount; i++) {
                 Comparable key = this.dataset.getSeriesKey(i);
                 Number x = this.dataset.getX(i, j);
                 Number y = this.dataset.getY(i, j);
-                //if (j == 0) {
-                header+="Tiempo [ms],";
+                // if (j == 0) {
+                header += "Tiempo [ms],";
                 header += String.format("%s,", key);
-                //}
-                //if (i == 0) {
+                // }
+                // if (i == 0) {
 
-                    aux += String.format("%s,", x);
-                //}
+                aux += String.format("%s,", x);
+                // }
 
                 aux += String.format("%s,", y);
             }
@@ -327,22 +312,82 @@ public class Views {
         System.out.println("exporte como csv");
     }
 
+    private class TorqueEquation {
+        String A;
+        String B;
+        String C;
+        String D;
+        String E;
+
+        TorqueEquation() {
+            this.reset();
+        };
+
+        public String toString() {
+            return "<html>" + A + "+" + B + "v+" + C + "v<sup>2</sup>+" + D
+                    + "<sup>dv</sup> &frasl; <sub>dt</sub></html>";
+        }
+
+        public void reset() {
+            A = "A";
+            B = "B";
+            C = "C";
+            D = "D";
+            E = "E";
+        }
+
+    }
+
     private class ButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
             String cmd = event.getActionCommand();
             System.err.println(cmd);
             if ("Gráfico".equals(cmd)) {
-                measurementPollTimer.scheduleAtFixedRate(new updateGraphMeasurements(), 1000, 500, TimeUnit.MILLISECONDS);
-                
+                measurementPollTimer.scheduleAtFixedRate(new updateGraphMeasurements(), 1000, 500,
+                        TimeUnit.MILLISECONDS);
+
             } else if (WRITE_CSV.equals(cmd)) {
                 String pattern = "yyyyMMdd HHmmss";
                 DateFormat df = new SimpleDateFormat(pattern);
                 Date today = Calendar.getInstance().getTime();
                 String todayAsString = df.format(today);
-                storeDataSet(CSV_FILEPATH+todayAsString);
+                storeDataSet(CSV_FILEPATH + todayAsString);
+            } else if (BROWSE_FILE_BUTTON_LABEL.equals(cmd)) {
+                JFileChooser c = new JFileChooser();
+                // Demonstrate "Open" dialog:
+                int rVal = c.showOpenDialog(Views.this.frame);
+                if (rVal == JFileChooser.APPROVE_OPTION) {
+                    filename.setText(c.getSelectedFile().getName());
+                    String dir = c.getCurrentDirectory().toString();
+                    String path = dir + "\\" + filename.getText();
+
+                    plotCSV(path);
+                }
+                if (rVal == JFileChooser.CANCEL_OPTION) {
+                    filename.setText("");
+                }
             }
 
         }
+    }
+
+    private class TestTypeHandler implements ItemListener {
+        @Override
+        public void itemStateChanged(ItemEvent event) {
+            if (event.getSource() == torqueTestModeComboBox) {
+
+                if (torqueTestModeComboBox.getSelectedItem() == testTypes.TORQUE_VS_SPEED) {
+                    // Tiempo de inicio-fin
+                    // Componentes de ecuación cupla
+                    torqueVsTimeVisibility(false);
+
+                } else if (torqueTestModeComboBox.getSelectedItem() == testTypes.TORQUE_VS_TIME) {
+                    torqueVsTimeVisibility(true);
+                }
+                // l1.setText(c1.getSelectedItem() + " selected");
+            }
+        }
+
     }
 }
