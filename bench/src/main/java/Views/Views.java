@@ -16,6 +16,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.TextStyle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Hashtable;
+import java.util.Map;
 
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
@@ -88,7 +91,7 @@ public class Views {
     private TorqueEquation torqueEquationText = new TorqueEquation();
     private JLabel torqueEquation = new JLabel(torqueEquationText.toString());
     private TorqueEquationParameters torqueEquationParameters =new TorqueEquationParameters();
-
+    public TorqueTimeValues torqueTimeValues=new TorqueTimeValues();
     /**
      * Actualiza las mediciones en pantalla, agrega la unidad de medida al final de
      * la
@@ -181,6 +184,7 @@ public class Views {
         this.displayedMeasurements.addMeasuredVariable(commands.TORQUE_COMMAND);
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_SPEED);
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_TIME);
+        this.torqueVsTimeVisibility(false);
 
         // this.torqueEquation.setContent("$T(v)=A+Bv+Cv^2+D\\frac{dv}{dt}$");
 
@@ -204,7 +208,10 @@ public class Views {
         controlPanel.add(leftPanel);
         frame.pack();
     }
-
+    public JPanel getInputPanel()
+    {
+        return this.inputPanel;
+    }
     private void setup() {
         inputPanel.add(torqueTestModeComboBox);
         inputPanel.add(openFileButton);
@@ -241,26 +248,30 @@ public class Views {
     public void alert(String message) {
         errorMsgLabel.setText(message);
     }
-
     private void plotCSV(String filepath) {
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] values = line.split(CSV_DELIMITER);
-                dataset.getSeries(commands.TORQUE_COMMAND.seriesName).add(Float.valueOf(values[0]),
-                        Float.valueOf(values[1]));
-
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot write dataset", e);
+        torqueTimeValues.fromCSV(filepath);
+        torqueTimeValues.extend(3);
+        for(int i=0;i<torqueTimeValues.length();i++)
+        {
+            dataset.getSeries(commands.TORQUE_COMMAND.seriesName).add(Float.valueOf(torqueTimeValues.getTimestamp(i)),
+        Float.valueOf(torqueTimeValues.getValue(i)));;
         }
+        
 
     }
-
+    public Map<String,TorqueEquationParameter>getTorqueEquationParameters()
+    {
+        return this.torqueEquationParameters.getParameterValues();
+    }
+    public testTypes getTestType()
+    {
+        
+        testTypes selectedTest=(testTypes)torqueTestModeComboBox.getSelectedItem();
+        return selectedTest;
+    }
     public void torqueVsTimeVisibility(boolean visible) {
-        startTime.setVisible(!visible);
-        stopTime.setVisible(!visible);
+        startTime.setVisible(visible);
+        stopTime.setVisible(visible);
         filename.setVisible(!visible);
         openFileButton.setVisible(!visible);
         torqueEquation.setVisible(visible);

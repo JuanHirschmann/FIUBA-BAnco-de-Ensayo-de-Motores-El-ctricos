@@ -1,6 +1,7 @@
 package Model;
 
 import java.net.ConnectException;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -12,6 +13,7 @@ import static Model.Constants.TORQUE_SETPOINT;
 import static Model.Constants.SOFTWARE_KILLSWITCH;
 import static Model.Constants.SOFTWARE_START;
 import static Model.Constants.SOFTWARE_STOP;
+import static Model.Constants.TORQUE_FROM_TIMESTAMP_SELECTED;
 import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
 import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 //import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
@@ -34,6 +36,8 @@ import org.opcfoundation.webservices.XMLDA._1_0.ServiceStub;
 import org.opcfoundation.webservices.XMLDA._1_0.Write;
 import org.opcfoundation.webservices.XMLDA._1_0.WriteRequestItemList;
 import org.opcfoundation.webservices.XMLDA._1_0.WriteResponse;
+
+import Common.TorqueEquationParameters;
 
 public class Model {
 
@@ -162,36 +166,6 @@ public class Model {
         }
     }
 
-    /*
-     * public String readTestVar() throws ConnectException
-     * {
-     * return readVar(VAR_PATH, TEST_VAR);
-     * }
-     * 
-     * public String readRunVar() throws ConnectException
-     * {
-     * return readVar(VAR_PATH, TEST_VAR);
-     * }
-     * public void setLoadAxisSpeed(String speedSetpoint) throws ConnectException
-     * {
-     * writeVar(speedSetpoint,VAR_PATH, LOAD_AXIS_SPEED_SETPOINT);
-     * writeVar("True",VAR_PATH, NEW_SPEED_SETPOINT_LOAD_AXIS);
-     * }
-     * public String readMotorLoadAxisSpeed() throws ConnectException
-     * {
-     * return readVar(VAR_PATH, TEST_VAR);
-     * }
-     */
-    /*
-     * public void run() throws ConnectException
-     * {
-     * writeVar("True",VAR_PATH, RUN);
-     * }
-     * public void stop() throws ConnectException
-     * {
-     * writeVar("False",VAR_PATH, RUN);
-     * }
-     */
     /**
      * Sends emergency stop signal to PLC.
      * 
@@ -294,7 +268,20 @@ public class Model {
 
         writeVar("TRUE", VAR_PATH, SOFTWARE_START);
     }
+    //
+    public void selectTorqueVsSpeed() throws ConnectException {
 
+        writeVar("FALSE", VAR_PATH, TORQUE_FROM_TIMESTAMP_SELECTED);
+    }
+    public void setTorqueVsTimeParameters(Map<String,Views.TorqueEquationParameter> parameters) throws ConnectException {
+        for (String key : parameters.keySet()) {
+            writeVar(parameters.get(key).getValue(),parameters.get(key).getVarPath(),parameters.get(key).getVarName());
+        }
+    }
+    public void selectTorqueVsTime() throws ConnectException {
+
+        writeVar("TRUE", VAR_PATH, TORQUE_FROM_TIMESTAMP_SELECTED);
+    }
     /**
      * Disables simulator axis and shutdowns line module
      * 

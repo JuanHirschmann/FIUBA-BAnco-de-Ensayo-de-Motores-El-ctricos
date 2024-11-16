@@ -40,10 +40,12 @@ public final class Constants {
     public static final String ENABLE_SIMULATOR_AXIS = "glob/ENABLE_SIMULATOR_AXIS";
     public static final String ENABLE_ACTIVE_LINEMODULE = "glob/ENABLE_LINEMODULE";
     public static final String SOFTWARE_KILLSWITCH = "glob/SOFTWARE_KILLSWITCH";
+    public static final String TEST_RUNTIME = "glob/TEST_RUNTIME";
     public static final String SOFTWARE_STOP = "unit/ladder.SOFTWARE_STOP_BUTTON";
     public static final String SOFTWARE_START = "unit/ladder.SOFTWARE_START_BUTTON";
     public static final String TORQUE_SETPOINT = "glob/TORQUE_SETPOINT";
-    public static final String SIMULATOR_SPEED_LIMIT = "glob/glob/SIMULATOR_SPEED_LIMIT";
+    public static final String SIMULATOR_SPEED_LIMIT = "glob/SIMULATOR_SPEED_LIMIT";
+    public static final String TORQUE_FROM_TIMESTAMP_SELECTED = "glob/TORQUE_FROM_TIMESTAMP_SELECTED";
     public static final String TIME_DELTA = "glob/DELTA";
     public static final String OPERATION_MODE = "var/modeOfOperation"; // _RUN, _STOP
     public static final String MEASURED_SIMULATOR_SPEED = "glob/ACTUAL_SIMULATOR_SPEED_RPM";// RPM
@@ -55,10 +57,13 @@ public final class Constants {
     public static final String TORQUE_BIAS = "unit/ladder.TORQUE_BIAS";
     public static final String QUADRATIC_COEFF = "unit/ladder.QUADRATIC_COEFF";
     public static final String LINEAR_COEFF = "unit/ladder.LINEAR_COEFF";
+    //TODO: Definir si estas variables entran
     public static final String ANGULAR_VELOCITY = "unit/ladder.ANGULAR_VELOCITY";
     public static final String INERTIA_COEFF = "unit/ladder.INERTIA_COEFF";
     public static final String AMPLITUDE = "unit/ladder.AMPLITUDE";
+    
     public static final String TORQUE_SETPOINT_COMMAND = "glob/TORQUE_VALUES";
+    public static final String TIMESTAMP_COMMAND = "glob/TIMESTAMP";
     // Etiquetas en las vistas
     public static final String CONTROLLER_START_BUTTON_LABEL = "Iniciar Control";
     public static final String POWER_ON_BUTTON_LABEL = "Activar potencia";

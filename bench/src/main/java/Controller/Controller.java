@@ -3,7 +3,9 @@ package Controller;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import Common.TorqueEquationParameters;
 import Model.Constants.commands;
+import Model.Constants.testTypes;
 import Model.Model;
 import Views.Views;
 import java.awt.event.ActionEvent;
@@ -41,15 +43,13 @@ public class Controller {
     private JButton buttonConnect = new JButton(CONNECT_BUTTON_LABEL);// Conecta a la IP objetivo
     private JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo TODO
     private JButton shutdownButton = new JButton(SHUTDOWN_BUTTON_LABEL);
-    ScheduledExecutorService timer = Executors.newScheduledThreadPool(1);
-    ScheduledExecutorService timer1 = Executors.newScheduledThreadPool(1);
-    ScheduledExecutorService timer2 = Executors.newScheduledThreadPool(1);
-    ScheduledExecutorService timer3 = Executors.newScheduledThreadPool(1);
-    ScheduledExecutorService timer4 = Executors.newScheduledThreadPool(1);
+    ScheduledExecutorService torqueTimer = Executors.newScheduledThreadPool(10);
+    ScheduledExecutorService voltageTimer = Executors.newScheduledThreadPool(10);
+    ScheduledExecutorService currentTimer = Executors.newScheduledThreadPool(10);
+    ScheduledExecutorService powerTimer = Executors.newScheduledThreadPool(10);
+    ScheduledExecutorService speedTimer = Executors.newScheduledThreadPool(10);
 
-    // TODO: Ejecutar con un temporizador por variable, considerar un tiempo de
-    // muestra de 60ms.
-    // TODO: Agregar el setpoint de torque
+    // TODO: Agregar el TORQUE_COMMAND
     private class updateMeasurements implements Runnable {
         private String measurement;
         private long timestamp;
@@ -71,21 +71,8 @@ public class Controller {
                 this.measurement = model.readVar(command.varPath, command.varName);
 
             } catch (Exception e) {
-                /*
-                 * view.updateMeasurements(String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()),
-                 * String.valueOf(rand.nextFloat()));
-                 */
-                /*
-                 * measured_simulator_torque[index] = "--";
-                 * measured_simulator_speed[index] = "--";
-                 * measured_simulator_voltage[index] = "--";
-                 * measured_simulator_current[index] = "--";
-                 * measured_simulator_power[index] = "--";
-                 */
-
+                
+                //TODO: Cuando no hay un dato usar algún tipo de promedio ponderado en vez de esto.
                 this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
                 try {
                     Thread.sleep(50);
@@ -156,11 +143,11 @@ public class Controller {
                     view.alert(e.getMessage());
                 }
             } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
-                timer.shutdown();
-                timer1.shutdown();
-                timer2.shutdown();
-                timer3.shutdown();
-                timer4.shutdown();
+                torqueTimer.shutdown();
+                voltageTimer.shutdown();
+                currentTimer.shutdown();
+                powerTimer.shutdown();
+                speedTimer.shutdown();
                 System.err.println("estoy en apagar");
                 try {
 
@@ -203,12 +190,28 @@ public class Controller {
                 System.err.println("estoy en iniciar");
                 startButton.setText(PAUSE_BUTTON_LABEL);
                 //Estos retardos tienen algo que ver con la desaparición de trazos en el gráfico en tiempo real
-                timer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 100, TimeUnit.MILLISECONDS);
-                timer1.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 8, 100, TimeUnit.MILLISECONDS);
-                timer2.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT), 16, 100, TimeUnit.MILLISECONDS);
-                timer3.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 32, 100, TimeUnit.MILLISECONDS);
-                timer4.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 64, 100, TimeUnit.MILLISECONDS);
+                torqueTimer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 200, TimeUnit.MILLISECONDS);
+                voltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 0, 200, TimeUnit.MILLISECONDS);
+                currentTimer.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT), 0, 200, TimeUnit.MILLISECONDS);
+                powerTimer.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 0, 200, TimeUnit.MILLISECONDS);
+                speedTimer.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 0, 200, TimeUnit.MILLISECONDS);
+                //Meter estado de LEDs
+                //Meter update de arrays
                 try {
+                    //Cargar tipo de parámetro
+                    testTypes test=view.getTestType();
+                    //int runtime=view.getTestRuntime();
+                    if(test==testTypes.TORQUE_VS_SPEED)
+                    {
+                        model.selectTorqueVsSpeed();
+                        model.setTorqueVsTimeParameters(view.getTorqueEquationParameters());
+                    }else if(test==testTypes.TORQUE_VS_TIME)
+                    {
+                        model.selectTorqueVsTime();
+                        //torqueTimer.scheduleAtFixedRate(new bufferCommands(model,timestamp,torque),0,500);
+                        
+                    }
+                    //model.setRuntime(runtime);
                     model.start();
                 } catch (Exception e) {
                     System.err.println("Tire error");
