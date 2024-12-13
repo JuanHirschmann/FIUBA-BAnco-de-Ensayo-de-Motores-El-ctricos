@@ -16,9 +16,21 @@ import java.util.Collections;
 import static Model.Constants.GRAPH_BUFFER_SIZE;
 
 public class MeasurementBuffer {
-    Map<String, ArrayList<Float>> data = new HashMap<>();
+    Map<String, ArrayList<Float>> data = new Hashtable<>();
     Set <String> keyset=new HashSet<>();
+    public MeasurementBuffer()
+    {
 
+    }
+    public MeasurementBuffer(MeasurementBuffer targetBuffer)
+    {
+        this.keyset.addAll(targetBuffer.keyset);
+        for(String key: targetBuffer.data.keySet())
+        {   
+            
+            this.data.put(key, new ArrayList<Float>(targetBuffer.data.get(key)));
+        }
+    }
     public void addTimeSeries(String time_series_name) {
         keyset.add(time_series_name);
         data.put(time_series_name, new ArrayList<Float>());
@@ -30,9 +42,6 @@ public class MeasurementBuffer {
             this.addTimeSeries(time_series_name);
             System.out.println(time_series_name);
         }
-        //System.out.println(time_series_name);
-        //System.out.println(measurement);
-        //System.out.println(timestamp);
         data.get(time_series_name).add(measurement);
         data.get(time_series_name + "_timestamp").add((float) timestamp);
     }
@@ -51,17 +60,28 @@ public class MeasurementBuffer {
     }
 
     public ArrayList<Float> getBufferedData(String time_series_name) {
-        return this.data.get(time_series_name);
+        return new ArrayList<Float>(this.data.get(time_series_name));
     }
 
     public ArrayList<Float> getBufferedDataTimestamp(String time_series_name) {
-        return this.data.get(time_series_name + "_timestamp");
+        return new ArrayList<Float>(this.data.get(time_series_name + "_timestamp"));
     }
 
     public Set<String> getKeySet() {
         return this.keyset;
     }
+    public Boolean isEmpty()
+    {
+        Boolean output=true;
+        for (String key : this.keyset) {
+            if(data.get(key).size()!=0)
+            {
+                output=false;
+            }
 
+        }
+        return output;
+    }
     public static void main(String[] args) {
         MeasurementBuffer buffer = new MeasurementBuffer();
 

@@ -44,7 +44,11 @@ public final class Constants {
     public static final String SOFTWARE_STOP = "unit/ladder.SOFTWARE_STOP_BUTTON";
     public static final String SOFTWARE_START = "unit/ladder.SOFTWARE_START_BUTTON";
     public static final String TORQUE_SETPOINT = "glob/TORQUE_SETPOINT";
+    public static final String CLEAR_TO_RECIEVE = "glob/CLEAR_TO_RECEIVE";
     public static final String SIMULATOR_SPEED_LIMIT = "glob/SIMULATOR_SPEED_LIMIT";
+    //TODO: Ver bien como se llaman los vectores
+    public static final String  TORQUE_TIME_VALUES = "glob/TORQUE_VALUES";
+    public static final String TIMESTAMP = "glob/TIMESTAMP";
     public static final String TORQUE_FROM_TIMESTAMP_SELECTED = "glob/TORQUE_FROM_TIMESTAMP_SELECTED";
     public static final String TIME_DELTA = "glob/DELTA";
     public static final String OPERATION_MODE = "var/modeOfOperation"; // _RUN, _STOP
@@ -54,6 +58,8 @@ public final class Constants {
     public static final String MEASURED_SIMULATOR_POWER = "unit/ladder.ACTUAL_ACTIVE_POWER"; // Kw
     public static final String MEASURED_SIMULATOR_CURRENT = "unit/ladder.ACTUAL_ABSOLUTE_CURRENT"; // Kw
     
+    public static final int TORQUE_TIME_BUFFER_SIZE = 1024;
+
     public static final String TORQUE_BIAS = "unit/ladder.TORQUE_BIAS";
     public static final String QUADRATIC_COEFF = "unit/ladder.QUADRATIC_COEFF";
     public static final String LINEAR_COEFF = "unit/ladder.LINEAR_COEFF";
@@ -68,6 +74,7 @@ public final class Constants {
     public static final String CONTROLLER_START_BUTTON_LABEL = "Iniciar Control";
     public static final String POWER_ON_BUTTON_LABEL = "Activar potencia";
     public static final String EMERGENCY_STOP_BUTTON_LABEL = "EMG";
+    public static final String EMERGENCY_RELEASE_BUTTON_LABEL = "Liberar EMG";
     public static final String CONNECT_BUTTON_LABEL = "Conectar";
     public static final String READ_VARIABLE_BUTTON_LABEL = "Leer variable";
     public static final String WRITE_VARIABLE_BUTTON_LABEL = "Escribir variable";
@@ -91,8 +98,8 @@ public final class Constants {
      */
     public enum testTypes
     {
-        TORQUE_VS_SPEED("Cupla en función del tiempo"),
-        TORQUE_VS_TIME("Cupla en función de la velocidad");
+        TORQUE_VS_SPEED("Cupla en función de la velocidad"),
+        TORQUE_VS_TIME("Cupla en función del tiempo");
         public final String displayName;
         /* commands(String path,String name,String displayName)
         {

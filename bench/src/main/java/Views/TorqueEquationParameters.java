@@ -1,6 +1,7 @@
 package Views;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -13,15 +14,15 @@ import static Model.Constants.TORQUE_BIAS;
 import static Model.Constants.VAR_PATH;
 public class TorqueEquationParameters {
 
-    Map<String, JLabel> parameterLabels = new Hashtable<>();
-    Map<String, JTextField> parameterInput = new Hashtable<>();
-    Map<String, TorqueEquationParameter> parameterValue = new Hashtable<>();
+    Map<String, JLabel> parameterLabels = new TreeMap<>();
+    Map<String, JTextField> parameterInput = new TreeMap<>();
+    Map<String, TorqueEquationParameter> parameterValue = new TreeMap<>();
 
     public TorqueEquationParameters() {
-        this.addParameter("A",VAR_PATH,TORQUE_BIAS, "0", "[Nm]");
-        this.addParameter("B",VAR_PATH,LINEAR_COEFF, "0", "[Nm/RPM]");
-        this.addParameter("C",VAR_PATH,QUADRATIC_COEFF, "0", "[Nm/RPM^2]");
-        this.addParameter("D",VAR_PATH,INERTIA_COEFF, "0", "[Nm/(RPM*s)]");
+        this.addParameter("A",TORQUE_BIAS, VAR_PATH,"0", "[Nm]");
+        this.addParameter("B",LINEAR_COEFF,VAR_PATH ,"0", "[Nm/RPM]");
+        this.addParameter("C",QUADRATIC_COEFF,VAR_PATH, "0", "[Nm/RPM^2]");
+        this.addParameter("D",INERTIA_COEFF,VAR_PATH, "0", "[Nm/(RPM*s)]");
     }
 
     public Map<String, TorqueEquationParameter> getParameterValues() {
@@ -40,7 +41,7 @@ public class TorqueEquationParameters {
         }
     }
     public void setParameters(JPanel panel) {
-        for (String key : this.parameterLabels.keySet()) {
+        for (String key : this.parameterValue.keySet()) {
             panel.add(parameterLabels.get(key));
             panel.add(parameterInput.get(key));
         }

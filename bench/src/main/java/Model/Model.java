@@ -1,43 +1,30 @@
 package Model;
 
 import java.net.ConnectException;
+import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.xml.namespace.QName;
 import static Model.Constants.VAR_PATH;
 //import static Model.Constants.TEST_VAR;
 import static Model.Constants.TORQUE_SETPOINT;
+import static Model.Constants.TORQUE_TIME_BUFFER_SIZE;
+import static Model.Constants.TORQUE_TIME_VALUES;
 //import static Model.Constants.RUN;
 import static Model.Constants.SOFTWARE_KILLSWITCH;
 import static Model.Constants.SOFTWARE_START;
 import static Model.Constants.SOFTWARE_STOP;
+import static Model.Constants.TEST_RUNTIME;
+import static Model.Constants.TIMESTAMP;
 import static Model.Constants.TORQUE_FROM_TIMESTAMP_SELECTED;
+import static Model.Constants.CLEAR_TO_RECIEVE;
 import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
 import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 //import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
 //import static Model.Constants.NEW_SPEED_SETPOINT_LOAD_AXIS;
 import static Model.Constants.OPERATION_MODE;
 
-import org.opcfoundation.webservices.XMLDA._1_0.Browse;
-import org.opcfoundation.webservices.XMLDA._1_0.BrowseElement;
-import org.opcfoundation.webservices.XMLDA._1_0.BrowseResponse;
-import org.opcfoundation.webservices.XMLDA._1_0.GetStatus;
-import org.opcfoundation.webservices.XMLDA._1_0.GetStatusResponse;
 import org.opcfoundation.webservices.XMLDA._1_0.ItemValue;
-import org.opcfoundation.webservices.XMLDA._1_0.ReadRequestItem;
-import org.opcfoundation.webservices.XMLDA._1_0.ReadRequestItemList;
-import org.opcfoundation.webservices.XMLDA._1_0.ReadResponse;
-import org.opcfoundation.webservices.XMLDA._1_0.ReplyItemList;
-import org.opcfoundation.webservices.XMLDA._1_0.RequestOptions;
-import org.opcfoundation.webservices.XMLDA._1_0.ServerStatus;
-import org.opcfoundation.webservices.XMLDA._1_0.ServiceStub;
-import org.opcfoundation.webservices.XMLDA._1_0.Write;
-import org.opcfoundation.webservices.XMLDA._1_0.WriteRequestItemList;
-import org.opcfoundation.webservices.XMLDA._1_0.WriteResponse;
-
-import Common.TorqueEquationParameters;
 
 public class Model {
 
@@ -132,6 +119,13 @@ public class Model {
         return returnVal;
     }
 
+    
+    /** Writes variable on OPC server
+     * @param varValue Variable value as String 
+     * @param varPath Variable Path on OPC Server Root 
+     * @param varName Variable name
+     * @throws ConnectException
+     */
     public void writeVar(String varValue, String varPath, String varName) throws ConnectException {
         try {
 
@@ -174,7 +168,14 @@ public class Model {
     public void emergencyStop() throws ConnectException {
         writeVar("TRUE", VAR_PATH, SOFTWARE_KILLSWITCH);
     }
-
+    /**
+     * Sends emergency stop signal to PLC.
+     * 
+     * @throws ConnectException
+     */
+    public void emergencyRelease() throws ConnectException {
+        writeVar("FALSE", VAR_PATH, SOFTWARE_KILLSWITCH);
+    }
     /**
      * Releases emergency stop signal from PLC.
      * 
@@ -247,7 +248,7 @@ public class Model {
     }
 
     /**
-     * Disables simulator axis and shutdowns line module
+     * Writes FALSE to SOFTWARE_START variable in PLC
      * 
      * @throws ConnectException
      */
@@ -257,7 +258,7 @@ public class Model {
     }
 
     /**
-     * Disables simulator axis and shutdowns line module
+     * Writes TRUE to SOFTWARE_START variable in PLC
      * 
      * @throws ConnectException
      */
@@ -268,28 +269,90 @@ public class Model {
 
         writeVar("TRUE", VAR_PATH, SOFTWARE_START);
     }
+    
+    
+    /** 
+     * Returns communication buffer Clear to Receive status from PLC.
+     * @return boolean if TRUE, PLC communication buffer is clear to receive.
+     */
+    public boolean bufferCTR() {
+        boolean output = false;
+        try {
+            String CTR = readVar(VAR_PATH, CLEAR_TO_RECIEVE);
+            if (CTR == "TRUE") {
+                output = false;
+            }
+        } catch (ConnectException e) {
+            System.out.println(e.getMessage());
+        }
+        return output;
+    }
+
+    
+    /** 
+     * Writes a List of values to the PLC's internal buffer. Doesn't check for 
+     * preconditions. Both lists are asumed to be same length, values should be numeric type.
+     * Timestamps intervals should be larger than 100ms. 
+     * @param timestamp timestamp to apply torque. Timestamp[i] should correspond to torque[i]
+     * @param torque Torque to be applied. Timestamp[i] should correspond to torque[i]
+     * @throws ConnectException
+     */
+    public void writeBuffer(List<String> timestamp, List<String> torque) throws ConnectException {
+        for (int i = 0; i < TORQUE_TIME_BUFFER_SIZE; i++) {
+            // TODO: Ver bien como se llaman los vectores
+            writeVar(torque.get(i), VAR_PATH, TORQUE_TIME_VALUES + i);
+            writeVar(timestamp.get(i), VAR_PATH, TIMESTAMP + i);
+        }
+    }
+
+    
+    /** 
+     * @throws ConnectException
+     */
     //
     public void selectTorqueVsSpeed() throws ConnectException {
 
         writeVar("FALSE", VAR_PATH, TORQUE_FROM_TIMESTAMP_SELECTED);
     }
-    public void setTorqueVsTimeParameters(Map<String,Views.TorqueEquationParameter> parameters) throws ConnectException {
+    
+    
+    /** Writes Torque Equation parameters onto OPC Server
+     * @param parameters Dictionary of String - TorqueEquationParameter pairs to be written.
+     * @throws ConnectException
+     */
+    public void setTorqueVsSpeedParameters(Map<String, Views.TorqueEquationParameter> parameters)
+            throws ConnectException {
         for (String key : parameters.keySet()) {
-            writeVar(parameters.get(key).getValue(),parameters.get(key).getVarPath(),parameters.get(key).getVarName());
+            System.err.println(parameters.get(key).getVarPath());
+            
+            System.err.println(parameters.get(key).getVarName());
+
+            System.err.println(parameters.get(key).getValue());
+            writeVar(parameters.get(key).getValue(), parameters.get(key).getVarPath(),
+                    parameters.get(key).getVarName());
         }
     }
+    public void setTestEndTime(String endtime_ms) throws ConnectException
+    {
+        writeVar(endtime_ms, VAR_PATH, TEST_RUNTIME);
+    }
+    
+    /** Writes TRUE to TORQUE_FROM_TIMESTAMP_SELECTED  variable on PLC. 
+     * @throws ConnectException
+     */
     public void selectTorqueVsTime() throws ConnectException {
 
         writeVar("TRUE", VAR_PATH, TORQUE_FROM_TIMESTAMP_SELECTED);
     }
+
     /**
      * Disables simulator axis and shutdowns line module
      * 
      * @throws ConnectException
      */
     public void powerOff() throws ConnectException {
-        this.enableSimulatorAxis(true);
-        this.enableLineModule(true);
+        this.enableSimulatorAxis(false);
+        this.enableLineModule(false);
         writeVar("_STOP", VAR_PATH, OPERATION_MODE);
     }
 

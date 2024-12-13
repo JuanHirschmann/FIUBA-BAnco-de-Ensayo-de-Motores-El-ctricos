@@ -1,4 +1,4 @@
-package Views;
+package Controller;
 
 import static Model.Constants.CSV_DELIMITER;
 
@@ -16,8 +16,21 @@ import javax.swing.JTextField;
 
 public class TorqueTimeValues {
     private int length=0;
+    private int onePeriodLength=0;
     private Map<String, ArrayList<String>> data = new Hashtable<>();
-    TorqueTimeValues()
+    public TorqueTimeValues(TorqueTimeValues copyTarget)
+    {
+        this.length=copyTarget.length;
+        System.out.println(this.length);
+        this.onePeriodLength=copyTarget.onePeriodLength;
+        for (String key: copyTarget.data.keySet())
+        {  
+            data.put(key, new ArrayList<String>(copyTarget.data.get(key)));
+            
+
+        }
+    }
+    public TorqueTimeValues()
     {
         data.put("value", new ArrayList<String>());
         data.put("timestamp", new ArrayList<String>());
@@ -30,7 +43,8 @@ public class TorqueTimeValues {
     {
         String aux;
         Float time_delta;
-        int initialLength=length;
+        int initialLength=onePeriodLength;
+        this.dropExtentions();
         for(int i=initialLength;i<(periods*initialLength);i++)
         {   
             aux=data.get("value").get(i-initialLength);
@@ -41,10 +55,34 @@ public class TorqueTimeValues {
             length++;
         }
         System.err.println("extendi");
-        System.err.println(aux=data.get("timestamp").get(length-1));
+        System.err.println(length);
+    }
+    public void dropExtentions()
+    {
+        int initialLength=onePeriodLength;
+        int counter=0;
+        for(int i=initialLength;i<this.length;i++)
+        {   
+            data.get("value").remove(initialLength);
+            data.get("timestamp").remove(initialLength);
+            counter++;
+        }
+        this.length-=counter;
+        System.err.println("reduje");
+        System.err.println(length);
+    }
+    public void clear()
+    {
+        this.data.clear();
+        this.length=0;
+        this.onePeriodLength=0;
+        
+        data.put("value", new ArrayList<String>());
+        data.put("timestamp", new ArrayList<String>());
     }
     public void fromCSV(String filepath)
     {
+        this.clear();
         try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -52,6 +90,7 @@ public class TorqueTimeValues {
                 data.get("timestamp").add(values[0]);
                 data.get("value").add(values[1]);
                 length++;
+                onePeriodLength++;
             }
         } catch (IOException e) {
             throw new IllegalStateException("Cannot write dataset", e);

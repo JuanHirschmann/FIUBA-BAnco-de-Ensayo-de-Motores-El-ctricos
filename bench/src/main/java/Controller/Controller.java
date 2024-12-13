@@ -1,62 +1,170 @@
 package Controller;
 
-import javax.swing.JButton;
-import javax.swing.JPanel;
-
-import Common.TorqueEquationParameters;
 import Model.Constants.commands;
-import Model.Constants.testTypes;
 import Model.Model;
+import Views.MeasurementBuffer;
+import Views.TorqueEquationParameter;
 import Views.Views;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.net.ConnectException;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 
-import static Model.Constants.CONNECT_BUTTON_LABEL;
-import static Model.Constants.EMERGENCY_STOP_BUTTON_LABEL;
-import static Model.Constants.MEASURED_SIMULATOR_CURRENT;
-import static Model.Constants.MEASURED_SIMULATOR_SPEED;
-import static Model.Constants.MEASURED_SIMULATOR_TORQUE;
-import static Model.Constants.MEASURED_SIMULATOR_VOLTAGE;
-import static Model.Constants.PAUSE_BUTTON_LABEL;
-import static Model.Constants.POWER_ON_BUTTON_LABEL;
-import static Model.Constants.SHUTDOWN_BUTTON_LABEL;
-import static Model.Constants.START_BUTTON_LABEL;
-import static Model.Constants.VAR_PATH;
-import static Model.Constants.MEASURED_SIMULATOR_POWER;
+import static Model.Constants.TORQUE_TIME_BUFFER_SIZE;
 
 import java.lang.Math;
+import java.net.ConnectException;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Controller {
+    // private ViewListener viewListener;
     private Views view;
     private Model model;
-    private JButton powerOnButton = new JButton(POWER_ON_BUTTON_LABEL);// Activa el modulo activo de linea y el eje
-    private JButton emergencyButton = new JButton(EMERGENCY_STOP_BUTTON_LABEL); // Freno de emergencia
-    private JButton buttonConnect = new JButton(CONNECT_BUTTON_LABEL);// Conecta a la IP objetivo
-    private JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo TODO
-    private JButton shutdownButton = new JButton(SHUTDOWN_BUTTON_LABEL);
+
+    private MeasurementBuffer measurementsBufferedValues = new MeasurementBuffer();
+    private TorqueTimeValues torqueTimeValues = new TorqueTimeValues();
+
     ScheduledExecutorService torqueTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService voltageTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService currentTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService powerTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService speedTimer = Executors.newScheduledThreadPool(10);
+    ScheduledExecutorService bufferTimer = Executors.newScheduledThreadPool(10);
+    public Controller(){};
+    public void setTestEndTime(String endtime_ms) throws ConnectException
+    {
+        model.setTestEndTime(endtime_ms);
+    }
+    public void createTorqueTimeFromCSV(String filepath) {
+        this.torqueTimeValues.fromCSV(filepath);
+        System.out.println(torqueTimeValues.length());
+    }
 
+    public void extendTorqueTimeValues(int periods) {
+        this.torqueTimeValues.extend(periods);
+    }
+
+    public TorqueTimeValues getTorqueTimeValues() {
+        // TorqueTimeValues output= new TorqueTimeValues(this.torqueTimeValues);
+        //System.out.println(torqueTimeValues.length());
+
+        return new TorqueTimeValues(this.torqueTimeValues);
+    }
+
+    public Controller(Model model, Views view) {
+        this.model = model;
+        this.view = view;
+
+    }
+
+    public void startMeasurements() {
+        torqueTimer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 200, TimeUnit.MILLISECONDS);
+        voltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 50, 200,
+                TimeUnit.MILLISECONDS);
+        currentTimer.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT), 100, 200,
+                TimeUnit.MILLISECONDS);
+        powerTimer.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 150, 200, TimeUnit.MILLISECONDS);
+        speedTimer.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 200, 200, TimeUnit.MILLISECONDS);
+        // Meter estado de LEDs
+        // Meter update de arrays
+        /*
+         * try {
+         * // Cargar tipo de parámetro
+         * testTypes test = view.getTestType();
+         * // int runtime=view.getTestRuntime();
+         * System.out.println(test);
+         * if (test == testTypes.TORQUE_VS_SPEED) {
+         * System.out.println("torquevsspeed");
+         * model.selectTorqueVsSpeed();
+         * model.setTorqueVsTimeParameters(view.getTorqueEquationParameters());
+         * } else if (test == testTypes.TORQUE_VS_TIME) {
+         * TorqueTimeValues torqueTimeValue = view.getTorqueTimeValues();
+         * //model.selectTorqueVsTime();
+         * bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(model,
+         * torqueTimeValue.getTimestamp(),
+         * torqueTimeValue.getTimestamp()), 0, 500, TimeUnit.MILLISECONDS);
+         * 
+         * }
+         */
+        // model.setRuntime(runtime);
+        // model.start();
+        /*
+         * } catch (Exception e) {
+         * System.err.println("Tire error");
+         * 
+         * System.err.println(e.getMessage());
+         * view.alert(e.getMessage());
+         * }
+         */
+    }
+
+    public void stopMeasurements() {
+        torqueTimer.shutdown();
+        voltageTimer.shutdown();
+        currentTimer.shutdown();
+        powerTimer.shutdown();
+        speedTimer.shutdown();
+    }
+
+    public MeasurementBuffer getMeasurementBuffer() {
+        return measurementsBufferedValues;
+    }
+
+    public void clearMeasurementBuffer() {
+        measurementsBufferedValues.clearBuffer();
+    }
+    public void connect(String targetIP) throws Exception
+    {
+        model.connect(targetIP);
+    }
+    
+    public void PLCStart() throws Exception
+    {
+        model.controllerOn();
+    }
+    public void PLCStop() throws Exception
+    {
+        model.controllerOff();
+    }
+    public void powerOn() throws Exception
+    {
+        model.powerOn();
+    }
+    public void powerOff() throws Exception
+    {
+        model.powerOff();
+    }
+    public void emergencyStop() throws Exception
+    {
+        model.emergencyStop();
+    }
+    public void emergencyRelease() throws Exception
+    {
+        model.emergencyRelease();
+    }
+    public void selectTorqueVsTime() throws ConnectException {
+
+        model.selectTorqueVsTime();
+    }
+    public void selectTorqueVsSpeed() throws ConnectException {
+
+        model.selectTorqueVsSpeed();
+    }
+    public void setTorqueVsSpeedParameters(Map<String,TorqueEquationParameter> parameters) throws ConnectException
+    {
+        model.setTorqueVsSpeedParameters(parameters);
+    }
     // TODO: Agregar el TORQUE_COMMAND
     private class updateMeasurements implements Runnable {
         private String measurement;
         private long timestamp;
         private long measurement_start_time = 0;
         private commands command;
+
         updateMeasurements(commands command) {
-            this.command=command;
+            this.command = command;
         };
 
         public void run() {
@@ -66,175 +174,67 @@ public class Controller {
                 this.measurement_start_time = System.currentTimeMillis();
             }
             this.timestamp = System.currentTimeMillis() - measurement_start_time;
-            //System.out.println(timestamp);
+            // System.out.println(timestamp);
             try {
                 this.measurement = model.readVar(command.varPath, command.varName);
 
             } catch (Exception e) {
-                
-                //TODO: Cuando no hay un dato usar algún tipo de promedio ponderado en vez de esto.
+
+                // TODO: Cuando no hay un dato usar algún tipo de promedio ponderado en vez de
+                // esto.
                 this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(0);
                 } catch (InterruptedException exception) {
                     System.out.println("nit");
                 } // Simula demora en leer datos
-
             }
-            view.updateMeasurements(timestamp,this.measurement,command.seriesName);
+            measurementsBufferedValues.addValue(command.seriesName, Float.valueOf(this.measurement), timestamp);
         }
 
     }
 
-    public Controller(Model model, Views view) {
-        this.model = model;
-        this.view = view;
+    private class sendTorqueCommands implements Runnable {
+        private int itemsLoadedOnBuffer = 0;
+        private boolean allDataLoaded = false;
+        private ArrayList<String> timestamp = new ArrayList<String>();
+        private ArrayList<String> torque = new ArrayList<String>();
 
-    }
+        sendTorqueCommands(Model model, ArrayList<String> timestamp, ArrayList<String> torque) {
+            this.itemsLoadedOnBuffer = 0;
+            this.timestamp = timestamp;
+            this.torque = torque;
 
-    /**
-     * modifies panel to account for controller-specific
-     * flow control
-     * 
-     * @return JPanel panel to modify
-     */
-    public void setupPanel(JPanel panel) {
-        // JPanel panel = new JPanel(new BorderLayout());
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new GridLayout(0, 3));
-        topPanel.add(buttonConnect);
-        topPanel.add(powerOnButton);
-        topPanel.add(startButton);
-        topPanel.add(emergencyButton);
-        topPanel.add(shutdownButton);
-        // TODO AGREGAR LOGICA DE EMG RELEASE
-        // TODO AGREGAR RESET
-        // TODO UNIFICAR EL ENCENDIDO
-        //
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.gridwidth = 10;
-        constraints.gridheight = 10;
-        panel.add(topPanel, constraints);
+        };
 
-        buttonConnect.addActionListener(new ButtonHandler());
-        startButton.addActionListener(new ButtonHandler());
-        emergencyButton.addActionListener(new ButtonHandler());
-        powerOnButton.addActionListener(new ButtonHandler());
-        shutdownButton.addActionListener(new ButtonHandler());
+        public void run() {
+            // Esto termina tienendo un lag de 200ms o mas
+            int chunkEnd = 0;
+            System.out.println(timestamp.size());
+            if (model.bufferCTR() && !this.allDataLoaded) {
+                if (itemsLoadedOnBuffer + TORQUE_TIME_BUFFER_SIZE > timestamp.size()) {
+                    chunkEnd = timestamp.size();
 
-    }
-
-    private class ButtonHandler implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-            String cmd = event.getActionCommand();
-            System.err.println(cmd);
-            if (CONNECT_BUTTON_LABEL.equals(cmd)) {
-                String url = view.getTargetIP();
-                System.err.println(url);
-                try {
-                    model.connect(url);
-                    Thread.sleep(100);
-                    model.controllerOn();
-                } catch (Exception e) {
-                    System.err.println(e.getMessage());
-                    view.alert(e.getMessage());
+                    this.allDataLoaded = true;
+                } else {
+                    chunkEnd = itemsLoadedOnBuffer + TORQUE_TIME_BUFFER_SIZE;
                 }
-            } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
-                torqueTimer.shutdown();
-                voltageTimer.shutdown();
-                currentTimer.shutdown();
-                powerTimer.shutdown();
-                speedTimer.shutdown();
-                System.err.println("estoy en apagar");
-                try {
+                // try {
 
-                    model.powerOff();
-                    // TODO: Necesita un retardo?
-                    model.controllerOff();
-                } catch (ConnectException e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    view.alert(e.getMessage());
-
-                }
-            } else if (EMERGENCY_STOP_BUTTON_LABEL.equals(cmd)) {
-                System.err.println("estoy en EMG Stop");
-                try {
-
-                    model.emergencyStop();
-
-                } catch (ConnectException e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    view.alert(e.getMessage());
-                }
-            } else if (POWER_ON_BUTTON_LABEL.equals(cmd)) {
-
-                System.err.println("estoy en potencia");
-                try {
-
-                    model.powerOn();
-
-                } catch (ConnectException e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    view.alert(e.getMessage());
-                }
-            } else if (START_BUTTON_LABEL.equals(cmd)) {
-                System.err.println("estoy en iniciar");
-                startButton.setText(PAUSE_BUTTON_LABEL);
-                //Estos retardos tienen algo que ver con la desaparición de trazos en el gráfico en tiempo real
-                torqueTimer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 200, TimeUnit.MILLISECONDS);
-                voltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 0, 200, TimeUnit.MILLISECONDS);
-                currentTimer.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT), 0, 200, TimeUnit.MILLISECONDS);
-                powerTimer.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 0, 200, TimeUnit.MILLISECONDS);
-                speedTimer.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 0, 200, TimeUnit.MILLISECONDS);
-                //Meter estado de LEDs
-                //Meter update de arrays
-                try {
-                    //Cargar tipo de parámetro
-                    testTypes test=view.getTestType();
-                    //int runtime=view.getTestRuntime();
-                    if(test==testTypes.TORQUE_VS_SPEED)
-                    {
-                        model.selectTorqueVsSpeed();
-                        model.setTorqueVsTimeParameters(view.getTorqueEquationParameters());
-                    }else if(test==testTypes.TORQUE_VS_TIME)
-                    {
-                        model.selectTorqueVsTime();
-                        //torqueTimer.scheduleAtFixedRate(new bufferCommands(model,timestamp,torque),0,500);
-                        
-                    }
-                    //model.setRuntime(runtime);
-                    model.start();
-                } catch (Exception e) {
-                    System.err.println("Tire error");
-                    
-                    System.err.println(e.getMessage());
-                    view.alert(e.getMessage());
-                }
-                // TODO Agregar lógica de inicio de ensayo
-            } else if (PAUSE_BUTTON_LABEL.equals(cmd)) {
-                startButton.setText(START_BUTTON_LABEL);
-                System.err.println("estoy en pausa");
-                try {
-                    model.stop();
-                } catch (Exception e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    view.alert(e.getMessage());
-                }
-                // TODO Agregar lógica de inicio de ensayo
+                // model.writeBuffer(timestamp.subList(itemsLoadedOnBuffer, chunkEnd),
+                // torque.subList(itemsLoadedOnBuffer, chunkEnd));
+                this.itemsLoadedOnBuffer = chunkEnd;
+                System.err.println(this.itemsLoadedOnBuffer);
+                /*
+                 * } catch (ConnectException e) {
+                 * System.err.println(e.getMessage());
+                 * this.allDataLoaded=false;
+                 * }
+                 */
 
             }
-
         }
+
     }
 }
+
