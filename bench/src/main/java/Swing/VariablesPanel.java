@@ -1,0 +1,23 @@
+package Swing;
+import javax.swing.JPanel;
+
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+
+public class VariablesPanel extends JPanel{
+    public VariablesPanel()
+    {
+        setLayout(new WrapLayout());
+        this.setPreferredSize(new Dimension(1100,100));
+    }
+    @Override
+    public void setEnabled(boolean enabled)
+    {
+        for(Component component: this.getComponents())
+        {
+            component.setEnabled(enabled);
+        }
+    }
+    
+}

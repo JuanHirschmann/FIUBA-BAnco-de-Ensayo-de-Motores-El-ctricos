@@ -1,18 +1,13 @@
 package Controller;
 
-import static Model.Constants.CSV_DELIMITER;
+import static Views.Constants.CSV_DELIMITER;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 public class TorqueTimeValues {
     private int length=0;
@@ -34,6 +29,18 @@ public class TorqueTimeValues {
     {
         data.put("value", new ArrayList<String>());
         data.put("timestamp", new ArrayList<String>());
+    }
+    public float getMaxTorque()
+    {
+        float max=0;
+        for(int i =0;i<data.get("value").size();i++)
+        {
+            if(Float.valueOf(data.get("value").get(i))>max)
+            {
+                max=Float.valueOf(data.get("value").get(i));
+            }
+        }
+        return max;
     }
     public int length()
     {

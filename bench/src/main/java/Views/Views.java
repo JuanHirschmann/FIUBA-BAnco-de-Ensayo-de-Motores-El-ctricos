@@ -1,19 +1,18 @@
 package Views;
 
-import static Model.Constants.AVAILABLE_TORQUE_MODES;
-import static Model.Constants.BROWSE_FILE_BUTTON_LABEL;
-import static Model.Constants.CONNECT_BUTTON_LABEL;
-import static Model.Constants.CSV_DELIMITER;
-import static Model.Constants.CSV_FILEPATH;
-import static Model.Constants.DEFAULT_SERVER_ADDRESS;
-import static Model.Constants.EMERGENCY_RELEASE_BUTTON_LABEL;
-import static Model.Constants.EMERGENCY_STOP_BUTTON_LABEL;
-import static Model.Constants.GRAPH_BUFFER_SIZE;
-import static Model.Constants.PAUSE_BUTTON_LABEL;
-import static Model.Constants.POWER_ON_BUTTON_LABEL;
-import static Model.Constants.SHUTDOWN_BUTTON_LABEL;
-import static Model.Constants.START_BUTTON_LABEL;
-import static Model.Constants.WRITE_CSV;
+import static Views.Constants.AVAILABLE_TORQUE_MODES;
+import static Views.Constants.BROWSE_FILE_BUTTON_LABEL;
+import static Views.Constants.CONNECT_BUTTON_LABEL;
+import static Views.Constants.CSV_DELIMITER;
+import static Views.Constants.CSV_FILEPATH;
+import static Views.Constants.EMERGENCY_RELEASE_BUTTON_LABEL;
+import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
+import static Views.Constants.PAUSE_BUTTON_LABEL;
+import static Views.Constants.POWER_ON_BUTTON_LABEL;
+import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
+import static Views.Constants.START_BUTTON_LABEL;
+import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
+import static Views.Constants.WRITE_CSV;
 
 //import java.awt.List;
 import java.text.DateFormat;
@@ -21,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -50,14 +50,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-import Model.Constants.commands;
+import Views.Constants.testStates;
 import Model.Constants.testTypes;
+import Swing.MainFrame;
+import Swing.TorqueEquationParameter;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -68,15 +71,16 @@ import java.io.BufferedReader;
 import org.scilab.forge.jlatexmath.TeXFormula;
 
 import Controller.Controller;
+import Controller.MeasurementBuffer;
 import Controller.TorqueTimeValues;
 import Controller.ViewListener;
+import Model.Constants.commands;
 
 public class Views implements ViewListener {
+
     Controller appController = null;
 
     private MainFrame frame = new MainFrame();
-    // private ScheduledExecutorService graphUpdateTimer =
-    // Executors.newScheduledThreadPool(40);
     private SwingPlotWorker plotUpdater = new SwingPlotWorker();
 
     public void setController(Controller controller) {
@@ -127,6 +131,9 @@ public class Views implements ViewListener {
      */
 
     private class SwingPlotWorker extends SwingWorker<Boolean, MeasurementBuffer> {
+        private static int DISPLAYED_MEASUREMENTS_UPDATE_RATIO = 5;// Cada cuanto chunks actualiza mediciones
+        private int chunkCounter = 0;
+        private static int MEAN_SAMPLE_SIZE = 50;
 
         @Override
         protected Boolean doInBackground() throws Exception {
@@ -153,21 +160,49 @@ public class Views implements ViewListener {
         protected void process(List<MeasurementBuffer> chunks) {
 
             for (MeasurementBuffer data : chunks) {
+
                 for (String key : data.getKeySet()) {
-                    float average_value = 0;
                     ArrayList<Float> value = new ArrayList<Float>(data.getBufferedData(key));
                     ArrayList<Float> timestamp = new ArrayList<Float>(data.getBufferedDataTimestamp(key));
 
                     for (int i = 0; i < value.size(); i++) {
                         mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
-                        average_value += value.get(i);
                     }
-                    average_value /= value.size();
-                    frame.getInputPanel().displayedMeasurements.addMeasurement(key, average_value);
 
+                }
+                chunkCounter++;
+                if (chunkCounter == DISPLAYED_MEASUREMENTS_UPDATE_RATIO) {
+                    chunkCounter = 0;
+                    for (String series : mainDataset.keySet()) {
+                        float accumValue = 0;
+                        int seriesLength = 0;
+                        seriesLength = mainDataset.get(series).getSeries(series).getItemCount();
+                        int sampleSize = seriesLength;
+                        if (seriesLength > MEAN_SAMPLE_SIZE) {
+                            sampleSize = MEAN_SAMPLE_SIZE;
+                        }
+                        for (int i = 0; i < sampleSize; i++) {
+                            accumValue += mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
+                                    .floatValue();
+                        }
+
+                        frame.getInputPanel().displayedMeasurements.addMeasurement(series,
+                                accumValue / sampleSize);
+                        accumValue = 0;
+                    }
+                    ;
                 }
 
             }
+
+            /*
+             * try {
+             * Thread.sleep(250);
+             * } catch (InterruptedException e) {
+             * // eat it. caught when interrupt is called
+             * System.out.println("MySwingWorker shut down.");
+             * }
+             */
 
         }
 
@@ -187,13 +222,78 @@ public class Views implements ViewListener {
         frame.getInputPanel().buttonConnect.addActionListener(new ButtonHandler());
         frame.getInputPanel().powerOnButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().shutdownButton.addActionListener(new ButtonHandler());
-        frame.getInputPanel().startPlotButton.addActionListener(new ButtonHandler());
+        frame.getInputPanel().setParametersButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().saveCSVButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().openFileButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().torqueTestModeComboBox.addItemListener(new TestTypeHandler());
         frame.getInputPanel().testPeriodsSpinner.addChangeListener(new PeriodExtensionHandler());
         createChart();
+        this.blockInput(testStates.INITIAL);
 
+    }
+
+    private void blockInput(testStates currentStep) {
+        if (currentStep == testStates.INITIAL) {
+            frame.getInputPanel().buttonConnect.setEnabled(true);
+            frame.getInputPanel().powerOnButton.setEnabled(false);
+            frame.getInputPanel().startButton.setEnabled(false);
+            frame.getInputPanel().emergencyButton.setEnabled(false);
+            frame.getInputPanel().shutdownButton.setEnabled(false);
+            frame.getInputPanel().targetIP.setEnabled(true);
+
+            frame.getInputPanel().variablesPanel.setEnabled(false);
+
+        } else if (currentStep == testStates.PLC_CONNECTED) {
+            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().powerOnButton.setEnabled(true);
+            frame.getInputPanel().startButton.setEnabled(false);
+            frame.getInputPanel().emergencyButton.setEnabled(true);
+            frame.getInputPanel().shutdownButton.setEnabled(false);
+            frame.getInputPanel().targetIP.setEnabled(false);
+
+            frame.getInputPanel().variablesPanel.setEnabled(false);
+        } else if (currentStep == testStates.POWER_CONNECTED) {
+
+            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().powerOnButton.setEnabled(false);
+            frame.getInputPanel().startButton.setEnabled(false);
+            frame.getInputPanel().emergencyButton.setEnabled(true);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
+            frame.getInputPanel().targetIP.setEnabled(false);
+
+            frame.getInputPanel().variablesPanel.setEnabled(true);
+        } else if (currentStep == testStates.TEST_PARAMETER_LOAD) {
+            // Tengo que asegurar que no hayan metido cualquier cosa
+            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().powerOnButton.setEnabled(false);
+            frame.getInputPanel().startButton.setEnabled(false);
+            frame.getInputPanel().emergencyButton.setEnabled(true);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
+            frame.getInputPanel().targetIP.setEnabled(false);
+
+            frame.getInputPanel().variablesPanel.setEnabled(true);
+
+        } else if (currentStep == testStates.TEST_PARAMETER_READY) {
+            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().powerOnButton.setEnabled(false);
+            frame.getInputPanel().startButton.setEnabled(true);
+            frame.getInputPanel().emergencyButton.setEnabled(true);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
+            frame.getInputPanel().targetIP.setEnabled(false);
+
+            frame.getInputPanel().variablesPanel.setEnabled(false);
+
+        } else if (currentStep == testStates.TEST_RUNNING) {
+            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().powerOnButton.setEnabled(false);
+            frame.getInputPanel().startButton.setEnabled(true);
+            frame.getInputPanel().emergencyButton.setEnabled(true);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
+            frame.getInputPanel().targetIP.setEnabled(false);
+
+            frame.getInputPanel().variablesPanel.setEnabled(false);
+
+        }
     }
 
     private JFreeChart createChart() {
@@ -230,7 +330,13 @@ public class Views implements ViewListener {
         plot.setRangeAxis(1, new NumberAxis("Velocidad [RPM]"));
         plot.setRangeAxis(2, new NumberAxis("Tensión [Vrms]"));
         plot.setRangeAxis(3, new NumberAxis("Corriente [Arms]"));
-        plot.setRangeAxis(4, new NumberAxis("Potencia [KW]"));
+        //plot.setRangeAxis(4, new NumberAxis("Potencia [KW]"));
+        
+        plot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
+        plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
+        plot.setRangeAxisLocation(2, AxisLocation.BOTTOM_OR_RIGHT);
+        plot.setRangeAxisLocation(3, AxisLocation.BOTTOM_OR_RIGHT);
+        plot.setRangeAxisLocation(4, AxisLocation.BOTTOM_OR_RIGHT);
         plot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
 
         // Map the data to the appropriate axis
@@ -261,12 +367,13 @@ public class Views implements ViewListener {
     }
 
     public void torqueVsTimeVisibility(boolean visible) {
-        frame.getInputPanel().startTime.setVisible(!visible);
         frame.getInputPanel().stopTime.setVisible(!visible);
         frame.getInputPanel().filename.setVisible(visible);
         frame.getInputPanel().openFileButton.setVisible(visible);
         frame.getInputPanel().torqueEquation.setVisible(!visible);
         frame.getInputPanel().torqueEquationParameters.setVisible(!visible);
+        frame.getInputPanel().testPeriodLabel.setVisible(visible);
+        frame.getInputPanel().testPeriodsSpinner.setVisible(visible);
         frame.getContentPane().revalidate();
         frame.getContentPane().repaint();
     }
@@ -276,7 +383,14 @@ public class Views implements ViewListener {
         return frame.getInputPanel().targetIP.getText();
     }
 
+    public void dismissAlert() {
+
+        frame.userMessagePanel.setBackground(Color.WHITE);
+        frame.getInputPanel().userMessageLabel.setText("");
+    }
+
     public void alert(String message) {
+        frame.userMessagePanel.setBackground(Color.RED);
         frame.getInputPanel().userMessageLabel.setText(message);
     }
 
@@ -358,18 +472,58 @@ public class Views implements ViewListener {
             System.err.println(cmd);
             System.err.println("aca");
 
-            if ("Gráfico".equals(cmd)) {
-                getController().startMeasurements();
+            if (SET_TEST_PARAMETERS_BUTTON_LABEL.equals(cmd)) {
+
                 try {
-                    // Este delay asegura que el buffer de mediciones tenga
-                    // las cinco mediciones
-                    Thread.sleep(100);
+                    // Cargar tipo de parámetro
+                    testTypes test = getTestType();
+                    // int runtime=this.getTestRuntime();
+                    System.out.println(test);
+
+                    blockInput(testStates.TEST_PARAMETER_READY);
+
+                    if (test == testTypes.TORQUE_VS_SPEED) {
+                        System.out.println("torquevsspeed");
+                        try {
+                            getController().selectTorqueVsSpeed();
+                            getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
+                            getController().setTorqueVsSpeedParameters(
+                                    frame.getInputPanel().torqueEquationParameters.getParameterValues());
+
+                            blockInput(testStates.TEST_RUNNING);
+                        } catch (Exception e) {
+
+                            System.err.println("Tire error");
+
+                            System.err.println(e.getMessage());
+
+                            blockInput(testStates.TEST_RUNNING);
+                            // blockInput(testStates.TEST_PARAMETER_READY);
+                        }
+                    } else if (test == testTypes.TORQUE_VS_TIME) {
+
+                        getController().selectTorqueVsTime();
+                        blockInput(testStates.TEST_RUNNING);
+                        // getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
+
+                        /*
+                         * TorqueTimeValues torqueTimeValue = this.getTorqueTimeValues();
+                         * // getController().selectTorqueVsTime();
+                         * bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(model,
+                         * torqueTimeValue.getTimestamp(),
+                         * torqueTimeValue.getTimestamp()), 0, 500, TimeUnit.MILLISECONDS);
+                         */
+
+                    }
+                    blockInput(testStates.TEST_RUNNING);
+
                 } catch (Exception e) {
-                    System.out.println("ouch");
+                    System.err.println(e.getMessage());
+                    alert(e.getMessage());
+
+                    // blockInput(testStates.TEST_PARAMETER_LOAD);
+                    blockInput(testStates.TEST_RUNNING);
                 }
-                plotUpdater.execute();
-                // plotUpdateTimer.start();
-                // plotUpdateTimer.setRepeats(true);
             } else if (WRITE_CSV.equals(cmd)) {
                 String pattern = "yyyyMMdd HHmmss";
                 DateFormat df = new SimpleDateFormat(pattern);
@@ -395,12 +549,17 @@ public class Views implements ViewListener {
                 String url = getTargetIP();
                 System.err.println(url);
                 try {
+
                     getController().connect(url);
                     Thread.sleep(100);
                     getController().PLCStart();
+                    blockInput(testStates.PLC_CONNECTED);
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
+
+                    blockInput(testStates.PLC_CONNECTED);
+                    // blockInput(testStates.INITIAL);
                 }
             } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
                 getController().stopMeasurements();
@@ -453,63 +612,40 @@ public class Views implements ViewListener {
                 try {
 
                     getController().powerOn();
+                    blockInput(testStates.POWER_CONNECTED);
 
                 } catch (Exception e) {
                     System.err.println("Tire error");
 
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
+                    blockInput(testStates.POWER_CONNECTED);
+                    // blockInput(testStates.PLC_CONNECTED);
                 }
             } else if (START_BUTTON_LABEL.equals(cmd)) {
                 System.err.println("estoy en iniciar");
+                getController().startMeasurements();
+                plotUpdater.execute();
                 frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
-                // Estos retardos tienen algo que ver con la desaparición de trazos en el
-                // gráfico en tiempo real
 
-                // Meter estado de LEDs
-                // Meter update de arrays
                 try {
-                    // Cargar tipo de parámetro
-                    testTypes test = getTestType();
-                    // int runtime=this.getTestRuntime();
-                    System.out.println(test);
+                    getController().start();
 
-                    if (test == testTypes.TORQUE_VS_SPEED) {
-                        System.out.println("torquevsspeed");
-                        try {
-                            getController().selectTorqueVsSpeed();
-                            getController().setTorqueVsSpeedParameters(
-                                    frame.getInputPanel().torqueEquationParameters.getParameterValues());
-                            getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
-                        } catch (ConnectException e) {
+                    blockInput(testStates.TEST_RUNNING);
 
-                            System.err.println("Tire error");
+                }
 
-                            System.err.println(e.getMessage());
-                        }
-                    } else if (test == testTypes.TORQUE_VS_TIME) {
-
-                        getController().selectTorqueVsTime();
-                        /*
-                         * TorqueTimeValues torqueTimeValue = this.getTorqueTimeValues();
-                         * // getController().selectTorqueVsTime();
-                         * bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(model,
-                         * torqueTimeValue.getTimestamp(),
-                         * torqueTimeValue.getTimestamp()), 0, 500, TimeUnit.MILLISECONDS);
-                         */
-
-                    }
-
-                    // getController().setRuntime(runtime);
-                    // getController().start();
-                } catch (Exception e) {
+                catch (Exception e) {
                     System.err.println("Tire error");
-
+                    // blockInput(testStates.TEST_LOAD_READY);
+                    blockInput(testStates.TEST_RUNNING);
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
                 }
                 // TODO Agregar lógica de inicio de ensayo
-            } else if (PAUSE_BUTTON_LABEL.equals(cmd)) {
+            } else if (PAUSE_BUTTON_LABEL.equals(cmd))
+
+            {
                 frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
                 System.err.println("estoy en pausa");
                 try {

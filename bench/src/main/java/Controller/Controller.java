@@ -1,9 +1,8 @@
 package Controller;
 
 import Model.Constants.commands;
+import Swing.TorqueEquationParameter;
 import Model.Model;
-import Views.MeasurementBuffer;
-import Views.TorqueEquationParameter;
 import Views.Views;
 import java.util.ArrayList;
 import java.util.Map;
@@ -32,11 +31,14 @@ public class Controller {
     ScheduledExecutorService powerTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService speedTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService bufferTimer = Executors.newScheduledThreadPool(10);
-    public Controller(){};
-    public void setTestEndTime(String endtime_ms) throws ConnectException
-    {
+
+    public Controller() {
+    };
+
+    public void setTestEndTime(String endtime_ms) throws ConnectException {
         model.setTestEndTime(endtime_ms);
     }
+
     public void createTorqueTimeFromCSV(String filepath) {
         this.torqueTimeValues.fromCSV(filepath);
         System.out.println(torqueTimeValues.length());
@@ -48,7 +50,7 @@ public class Controller {
 
     public TorqueTimeValues getTorqueTimeValues() {
         // TorqueTimeValues output= new TorqueTimeValues(this.torqueTimeValues);
-        //System.out.println(torqueTimeValues.length());
+        // System.out.println(torqueTimeValues.length());
 
         return new TorqueTimeValues(this.torqueTimeValues);
     }
@@ -108,6 +110,20 @@ public class Controller {
         speedTimer.shutdown();
     }
 
+    public void start() throws ConnectException {
+        if (model.isConnected()) {
+            try {
+
+                model.start();
+            } catch (Exception e) {
+                throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            }
+        } else {
+
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
+    }
+
     public MeasurementBuffer getMeasurementBuffer() {
         return measurementsBufferedValues;
     }
@@ -115,47 +131,105 @@ public class Controller {
     public void clearMeasurementBuffer() {
         measurementsBufferedValues.clearBuffer();
     }
-    public void connect(String targetIP) throws Exception
-    {
-        model.connect(targetIP);
+
+    public void connect(String targetIP) throws Exception {
+        try {
+
+            model.connect(targetIP);
+        } catch (Exception e) {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
+
     }
-    
-    public void PLCStart() throws Exception
-    {
-        model.controllerOn();
+
+    public void PLCStart() throws Exception {
+        if (model.isConnected()) {
+            model.controllerOn();
+
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
+
     }
-    public void PLCStop() throws Exception
-    {
+
+    public void PLCStop() throws Exception {
         model.controllerOff();
     }
-    public void powerOn() throws Exception
-    {
-        model.powerOn();
+
+    public void powerOn() throws Exception {
+        if (model.isConnected()) {
+            model.powerOn();
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
+
     }
-    public void powerOff() throws Exception
-    {
-        model.powerOff();
+
+    public void powerOff() throws Exception {
+        if (model.isConnected()) {
+            model.powerOff();
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
     }
-    public void emergencyStop() throws Exception
-    {
-        model.emergencyStop();
+
+    public void emergencyStop() throws Exception {
+        if (model.isConnected()) {
+            model.emergencyStop();
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
     }
-    public void emergencyRelease() throws Exception
-    {
-        model.emergencyRelease();
+
+    public void emergencyRelease() throws Exception {
+        if (model.isConnected()) {
+            model.emergencyRelease();
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
     }
+
     public void selectTorqueVsTime() throws ConnectException {
-
-        model.selectTorqueVsTime();
+        //TODO: SACAR EL !
+        if (!model.isConnected()) {
+            if (this.torqueTimeValues.length() == 0) {
+                throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
+            } else if (this.torqueTimeValues.getMaxTorque() > 30) {
+                throw new IllegalArgumentException("Torque máximo excedido");
+            }
+            model.selectTorqueVsTime();
+            model.setTestEndTime(null);
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
     }
+
     public void selectTorqueVsSpeed() throws ConnectException {
+        if (model.isConnected()) {
+            model.selectTorqueVsSpeed();
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
+    }
 
-        model.selectTorqueVsSpeed();
+    public void setTorqueVsSpeedParameters(Map<String, TorqueEquationParameter> parameters) throws Exception {
+        //TODO: SACAR EL !
+        if (!model.isConnected()) {
+            if (Float.valueOf(parameters.get("D").getValue()) < 0) {
+                throw new IllegalArgumentException("El valor del término inercial no puede ser negativo");
+            } else if (Float.valueOf(parameters.get("D").getValue()) > 0.3) {
+                throw new IllegalArgumentException("El valor del término inercial no puede ser mayor a 0.3");
+            }
+            model.setTorqueVsSpeedParameters(parameters);
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+        }
     }
-    public void setTorqueVsSpeedParameters(Map<String,TorqueEquationParameter> parameters) throws ConnectException
-    {
-        model.setTorqueVsSpeedParameters(parameters);
+
+    public boolean isModelConnected() {
+        return model.isConnected();
     }
+
     // TODO: Agregar el TORQUE_COMMAND
     private class updateMeasurements implements Runnable {
         private String measurement;
@@ -176,7 +250,12 @@ public class Controller {
             this.timestamp = System.currentTimeMillis() - measurement_start_time;
             // System.out.println(timestamp);
             try {
-                this.measurement = model.readVar(command.varPath, command.varName);
+                if (model.isConnected()) {
+
+                    this.measurement = model.readVar(command.varPath, command.varName);
+                } else {
+                    throw new Exception("d");
+                }
 
             } catch (Exception e) {
 
@@ -184,7 +263,7 @@ public class Controller {
                 // esto.
                 this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
                 try {
-                    Thread.sleep(0);
+                    Thread.sleep(150);
                 } catch (InterruptedException exception) {
                     System.out.println("nit");
                 } // Simula demora en leer datos
@@ -237,4 +316,3 @@ public class Controller {
 
     }
 }
-
