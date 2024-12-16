@@ -34,6 +34,7 @@ public final class Constants {
         TEST_PARAMETER_LOAD(),
         TEST_PARAMETER_READY(),
         TEST_RUNNING(),
+        TEST_END(),
     }
     
     /*

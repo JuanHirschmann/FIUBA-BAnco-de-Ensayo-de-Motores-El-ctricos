@@ -38,6 +38,11 @@ public class ArrayOfBoolean  implements java.io.Serializable {
         this._boolean = _boolean;
     }
 
+    
+    /** 
+     * @param i
+     * @return boolean
+     */
     public boolean get_boolean(int i) {
         return this._boolean[i];
     }

@@ -84,6 +84,11 @@ public class ReadResponse  implements java.io.Serializable {
         this.errors = errors;
     }
 
+    
+    /** 
+     * @param i
+     * @return OPCError
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.OPCError getErrors(int i) {
         return this.errors[i];
     }

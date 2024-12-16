@@ -53,6 +53,11 @@ public class BrowseElement  implements java.io.Serializable {
         this.properties = properties;
     }
 
+    
+    /** 
+     * @param i
+     * @return ItemProperty
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.ItemProperty getProperties(int i) {
         return this.properties[i];
     }

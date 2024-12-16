@@ -70,6 +70,11 @@ public class SubscriptionPolledRefresh  implements java.io.Serializable {
         this.serverSubHandles = serverSubHandles;
     }
 
+    
+    /** 
+     * @param i
+     * @return String
+     */
     public java.lang.String getServerSubHandles(int i) {
         return this.serverSubHandles[i];
     }

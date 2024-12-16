@@ -62,6 +62,11 @@ public class OPCError  implements java.io.Serializable {
     }
 
     private java.lang.Object __equalsCalc = null;
+    
+    /** 
+     * @param obj
+     * @return boolean
+     */
     public synchronized boolean equals(java.lang.Object obj) {
         if (!(obj instanceof OPCError)) return false;
         OPCError other = (OPCError) obj;

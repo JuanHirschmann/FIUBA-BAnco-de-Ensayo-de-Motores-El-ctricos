@@ -44,14 +44,17 @@ import javax.swing.JFileChooser;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
@@ -83,6 +86,10 @@ public class Views implements ViewListener {
     private MainFrame frame = new MainFrame();
     private SwingPlotWorker plotUpdater = new SwingPlotWorker();
 
+    
+    /** 
+     * @param controller
+     */
     public void setController(Controller controller) {
         appController = controller;
     };
@@ -105,6 +112,10 @@ public class Views implements ViewListener {
     public void emergencyStopRequest() {
     }
 
+    
+    /** 
+     * @return Controller
+     */
     public Controller getController() {
         return this.appController;
     }
@@ -293,7 +304,18 @@ public class Views implements ViewListener {
 
             frame.getInputPanel().variablesPanel.setEnabled(false);
 
+        } else if (currentStep == testStates.TEST_END) {
+            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().powerOnButton.setEnabled(false);
+            frame.getInputPanel().startButton.setEnabled(true);
+            frame.getInputPanel().emergencyButton.setEnabled(false);
+            frame.getInputPanel().shutdownButton.setEnabled(false);
+            frame.getInputPanel().targetIP.setEnabled(false);
+
+            frame.getInputPanel().variablesPanel.setEnabled(false);
+            frame.getInputPanel().saveCSVButton.setEnabled(true);
         }
+        ;
     }
 
     private JFreeChart createChart() {
@@ -312,40 +334,49 @@ public class Views implements ViewListener {
         mainDataset.get(commands.CURRENT.seriesName).addSeries(current_data);
 
         // construct the plot
-        XYPlot plot = new XYPlot();
-        plot.setDataset(0, mainDataset.get(commands.TORQUE.seriesName));
-        plot.setDataset(1, mainDataset.get(commands.SPEED.seriesName));
-        plot.setDataset(2, mainDataset.get(commands.VOLTAGE.seriesName));
-        plot.setDataset(3, mainDataset.get(commands.CURRENT.seriesName));
-        plot.setDataset(4, mainDataset.get(commands.POWER.seriesName));
+        XYPlot topPlot = new XYPlot();
+        topPlot.setDataset(0, mainDataset.get(commands.TORQUE.seriesName));
+        topPlot.setDataset(1, mainDataset.get(commands.SPEED.seriesName));
+        topPlot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
+        topPlot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+        topPlot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
+        topPlot.setRangeAxis(0, new NumberAxis("Torque [Nm]"));
+        topPlot.setRangeAxis(1, new NumberAxis("Velocidad [RPM]"));
+
+        topPlot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
+        topPlot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
+        topPlot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
+        topPlot.mapDatasetToRangeAxis(0, 0);
+        topPlot.mapDatasetToRangeAxis(1, 1);
         // customize the plot with renderers and axis
+        XYPlot bottomPlot = new XYPlot();
+        bottomPlot.setDataset(0, mainDataset.get(commands.VOLTAGE.seriesName));
+        bottomPlot.setDataset(1, mainDataset.get(commands.CURRENT.seriesName));
+        bottomPlot.setDataset(2, mainDataset.get(commands.POWER.seriesName));
+        bottomPlot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.setRangeAxis(0, new NumberAxis("Tensión [Vrms]"));
+        bottomPlot.setRangeAxis(1, new NumberAxis("Corriente [Arms]"));
+        bottomPlot.setRangeAxis(2, new NumberAxis("Potencia [KW]"));
+        bottomPlot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
+        bottomPlot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
+        bottomPlot.setRangeAxisLocation(2, AxisLocation.BOTTOM_OR_RIGHT);
+        bottomPlot.mapDatasetToRangeAxis(0, 0);
+        bottomPlot.mapDatasetToRangeAxis(1, 1);
+        bottomPlot.mapDatasetToRangeAxis(2, 2);
+        bottomPlot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
+
+        // generate the chart
+        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(new NumberAxis("Domain"));
+        plot.setDomainPannable(true);
+        plot.setRangePannable(true);
+        plot.add(topPlot);
+        plot.add(bottomPlot);
         // r1.setSeriesPaint(0, Color.BLACK);
-        plot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
-        plot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
-        plot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
-        plot.setRenderer(3, new XYLineAndShapeRenderer(true, false));
-        plot.setRenderer(4, new XYLineAndShapeRenderer(true, false));
         // plot.setRenderer(1, splinerenderer);
-        plot.setRangeAxis(0, new NumberAxis("Torque [Nm]"));
-        plot.setRangeAxis(1, new NumberAxis("Velocidad [RPM]"));
-        plot.setRangeAxis(2, new NumberAxis("Tensión [Vrms]"));
-        plot.setRangeAxis(3, new NumberAxis("Corriente [Arms]"));
-        //plot.setRangeAxis(4, new NumberAxis("Potencia [KW]"));
-        
-        plot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
-        plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
-        plot.setRangeAxisLocation(2, AxisLocation.BOTTOM_OR_RIGHT);
-        plot.setRangeAxisLocation(3, AxisLocation.BOTTOM_OR_RIGHT);
-        plot.setRangeAxisLocation(4, AxisLocation.BOTTOM_OR_RIGHT);
-        plot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
 
         // Map the data to the appropriate axis
-        plot.mapDatasetToRangeAxis(0, 0);
-        plot.mapDatasetToRangeAxis(1, 1);
-        plot.mapDatasetToRangeAxis(2, 2);
-        plot.mapDatasetToRangeAxis(3, 3);
-        plot.mapDatasetToRangeAxis(4, 4);
-        // generate the chart
         JFreeChart chart = new JFreeChart("Variables en tiempo real", null, plot, true);
         frame.setChart(chart);
 
@@ -417,54 +448,104 @@ public class Views implements ViewListener {
 
     }
 
-    /*
-     * private void storeDataSet(String filename) {
-     * /*
-     * int seriesCount = this.dataset.getSeriesCount();
-     * int itemCount = this.dataset.getItemCount(0);
-     * String header = "";
-     * String aux = "";
-     * System.out.println(seriesCount);
-     * System.out.println(itemCount);
-     * java.util.List<String> csv = new ArrayList<>();
-     * for (int j = 0; j < itemCount; j++) {
-     * for (int i = 0; i < seriesCount; i++) {
-     * Comparable key = this.dataset.getSeriesKey(i);
-     * Number x = this.dataset.getX(i, j);
-     * Number y = this.dataset.getY(i, j);
-     * // if (j == 0) {
-     * header += "Tiempo [ms],";
-     * header += String.format("%s,", key);
-     * // }
-     * // if (i == 0) {
-     * 
-     * aux += String.format("%s,", x);
-     * // }
-     * 
-     * aux += String.format("%s,", y);
-     * }
-     * if (j == 0) {
-     * 
-     * csv.add(header);
-     * }
-     * csv.add(aux);
-     * aux = "";
-     * }
-     * 
-     * try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename +
-     * ".csv"));) {
-     * for (String line : csv) {
-     * writer.append(line);
-     * writer.newLine();
-     * }
-     * } catch (IOException e) {
-     * throw new IllegalStateException("Cannot write dataset", e);
-     * }
-     * System.out.println("exporte como csv");
-     * 
-     * }
-     *
-     */
+    private void storeDataSet(String filename) {
+
+        java.util.List<String> csv = new ArrayList<>();
+        int maxItemCount = 0;
+        for (String series : mainDataset.keySet()) {
+            int itemCount = this.mainDataset.get(series).getSeries(series).getItemCount();
+            if (maxItemCount < itemCount) {
+                maxItemCount = itemCount;
+            }
+        }
+        // for (String series : mainDataset.keySet()) {
+        // int seriesCount = this.mainDataset.get(series).getSeriesCount();
+        // int itemCount = this.mainDataset.get(series).getItemCount(0);
+        String header = "";
+        String aux = "";
+        // System.out.println(seriesCount);
+        // System.out.println(itemCount);
+        for (int j = 0; j < maxItemCount; j++) {
+            for (String key : this.mainDataset.keySet()) {
+                List<XYSeries> seriesList = this.mainDataset.get(key).getSeries();
+                Iterator<XYSeries> it = seriesList.iterator();
+                while (it.hasNext()) {
+                    XYSeries currentSeries = it.next();
+
+                    try {
+                        Number x = currentSeries.getX(j);
+                        Number y = currentSeries.getY(j);
+                        aux += String.format("%s,", x);
+                        // }
+
+                        aux += String.format("%s,", y);
+                    } catch (IndexOutOfBoundsException e) {
+                        aux += String.format("%s,", "");
+                        aux += String.format("%s,", "");
+                    }
+                    // if (j == 0) {
+                    header += "Tiempo [ms],";
+                    header += String.format("%s,", currentSeries.getKey());
+                    // }
+                    // if (i == 0) {
+
+                }
+                
+                
+            }
+            if (j == 0) {
+
+                csv.add(header);
+            }
+            csv.add(aux);
+                aux = "";
+            // }
+            /*
+             * for (int i = 0; i < seriesCount; i++) {
+             * Comparable key = this.mainDataset.get(series).getSeriesKey(i);
+             * 
+             * try {
+             * Number x = this.mainDataset.get(series).getX(i, j);
+             * Number y = this.mainDataset.get(series).getY(i, j);
+             * aux += String.format("%s,", x);
+             * // }
+             * 
+             * aux += String.format("%s,", y);
+             * } catch (IndexOutOfBoundsException e) {
+             * aux += String.format("%s,", "");
+             * aux += String.format("%s,", "");
+             * }
+             * // if (j == 0) {
+             * header += "Tiempo [ms],";
+             * header += String.format("%s,", series);
+             * // }
+             * // if (i == 0) {
+             * 
+             * }
+             * if (j == 0) {
+             * 
+             * csv.add(header);
+             * }
+             * csv.add(aux);
+             * aux = "";
+             * }
+             */
+
+        }
+        try (
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filename +
+                        ".csv"));) {
+            for (String line : csv) {
+                writer.append(line);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot write mainDataset", e);
+        }
+        System.out.println("exporte como csv");
+    }
+
     private class ButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -529,7 +610,7 @@ public class Views implements ViewListener {
                 DateFormat df = new SimpleDateFormat(pattern);
                 Date today = Calendar.getInstance().getTime();
                 String todayAsString = df.format(today);
-                // storeDataSet(CSV_FILEPATH + todayAsString);
+                storeDataSet(CSV_FILEPATH + todayAsString);
             } else if (BROWSE_FILE_BUTTON_LABEL.equals(cmd)) {
                 JFileChooser c = new JFileChooser();
                 // Demonstrate "Open" dialog:
@@ -570,11 +651,14 @@ public class Views implements ViewListener {
                     getController().powerOff();
                     // TODO: Necesita un retardo?
                     getController().PLCStop();
+                    blockInput(testStates.TEST_END);
                 } catch (Exception e) {
                     System.err.println("Tire error");
 
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
+                    // blockInput(testStates.TEST_RUNNING);
+                    blockInput(testStates.TEST_END);
 
                 }
 

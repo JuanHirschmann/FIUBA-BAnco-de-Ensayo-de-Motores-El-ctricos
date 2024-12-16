@@ -74,6 +74,11 @@ public class Browse  implements java.io.Serializable {
         this.propertyNames = propertyNames;
     }
 
+    
+    /** 
+     * @param i
+     * @return QName
+     */
     public javax.xml.namespace.QName getPropertyNames(int i) {
         return this.propertyNames[i];
     }

@@ -70,6 +70,11 @@ public class SubscriptionPolledRefreshResponse  implements java.io.Serializable 
         this.invalidServerSubHandles = invalidServerSubHandles;
     }
 
+    
+    /** 
+     * @param i
+     * @return String
+     */
     public java.lang.String getInvalidServerSubHandles(int i) {
         return this.invalidServerSubHandles[i];
     }

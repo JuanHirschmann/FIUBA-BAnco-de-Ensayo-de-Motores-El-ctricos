@@ -47,6 +47,11 @@ public class ReadRequestItemList  implements java.io.Serializable {
         this.items = items;
     }
 
+    
+    /** 
+     * @param i
+     * @return ReadRequestItem
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.ReadRequestItem getItems(int i) {
         return this.items[i];
     }

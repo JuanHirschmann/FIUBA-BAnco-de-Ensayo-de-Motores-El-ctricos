@@ -25,6 +25,10 @@ public class TorqueEquationParameters {
         this.addParameter("D",INERTIA_COEFF,VAR_PATH, "0", "[Nm/(RPM*s)]");
     }
 
+    
+    /** 
+     * @return Map<String, TorqueEquationParameter>
+     */
     public Map<String, TorqueEquationParameter> getParameterValues() {
         Map<String, TorqueEquationParameter> output = new Hashtable<>();
         this.update();
@@ -40,6 +44,10 @@ public class TorqueEquationParameters {
             this.parameterValue.get(key).update(value);
         }
     }
+    
+    /** 
+     * @param panel
+     */
     public void setParameters(JPanel panel) {
         for (String key : this.parameterValue.keySet()) {
             panel.add(parameterLabels.get(key));

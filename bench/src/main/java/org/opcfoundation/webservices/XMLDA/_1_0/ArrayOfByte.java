@@ -38,6 +38,11 @@ public class ArrayOfByte  implements java.io.Serializable {
         this._byte = _byte;
     }
 
+    
+    /** 
+     * @param i
+     * @return byte
+     */
     public byte get_byte(int i) {
         return this._byte[i];
     }

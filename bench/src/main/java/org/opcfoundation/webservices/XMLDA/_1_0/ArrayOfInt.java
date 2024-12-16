@@ -38,6 +38,11 @@ public class ArrayOfInt  implements java.io.Serializable {
         this._int = _int;
     }
 
+    
+    /** 
+     * @param i
+     * @return int
+     */
     public int get_int(int i) {
         return this._int[i];
     }

@@ -30,6 +30,11 @@ public class TorqueTimeValues {
         data.put("value", new ArrayList<String>());
         data.put("timestamp", new ArrayList<String>());
     }
+    
+    /** 
+     * Returns the maximum torque value found on the torque time waveform
+     * @return float
+     */
     public float getMaxTorque()
     {
         float max=0;
@@ -42,10 +47,18 @@ public class TorqueTimeValues {
         }
         return max;
     }
+    
+    /** 
+     * returns torque commands value's length
+     * @return int
+     */
     public int length()
     {
         return length;
     }
+    /* 
+     * Replicates the torque time waveform for a integer number of periods
+     */
     public void extend(int periods)
     {
         String aux;
@@ -64,6 +77,10 @@ public class TorqueTimeValues {
         System.err.println("extendi");
         System.err.println(length);
     }
+    /* 
+     * Drops the torque waveform to its original size. Only changes the waveform 
+     * if it was previously extended
+     */
     public void dropExtentions()
     {
         int initialLength=onePeriodLength;
@@ -78,6 +95,9 @@ public class TorqueTimeValues {
         System.err.println("reduje");
         System.err.println(length);
     }
+    /* 
+     * Clears the torque time waveform
+     */
     public void clear()
     {
         this.data.clear();
@@ -87,6 +107,9 @@ public class TorqueTimeValues {
         data.put("value", new ArrayList<String>());
         data.put("timestamp", new ArrayList<String>());
     }
+    /* 
+     * Creates a torque time waveform from a CSV file (time , torque)
+     */
     public void fromCSV(String filepath)
     {
         this.clear();
@@ -103,15 +126,27 @@ public class TorqueTimeValues {
             throw new IllegalStateException("Cannot write dataset", e);
         }
     }
+    /* 
+     * gets the timestamps for the waveform
+     */
     public ArrayList<String> getTimestamp()
     {
         return this.data.get("timestamp");
     }
     
+    
+    /* 
+     * gets the values for the waveform
+     */
     public ArrayList<String> getValue()
     {
         return this.data.get("value");
     }
+
+    /*
+     * Gets a certain index from timestamp    
+     * @param index
+     */
     public String getTimestamp( int index)
     {
         String timestamp;
@@ -125,6 +160,11 @@ public class TorqueTimeValues {
         return timestamp;
     }
     
+    
+    /*
+     * Gets a certain index from torque    
+     * @param index
+     */
     public String getValue(int index)
     {
         String value;

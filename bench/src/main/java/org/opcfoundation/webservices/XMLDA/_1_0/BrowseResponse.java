@@ -70,6 +70,11 @@ public class BrowseResponse  implements java.io.Serializable {
         this.elements = elements;
     }
 
+    
+    /** 
+     * @param i
+     * @return BrowseElement
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.BrowseElement getElements(int i) {
         return this.elements[i];
     }

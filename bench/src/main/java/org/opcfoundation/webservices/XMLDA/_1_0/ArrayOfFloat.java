@@ -38,6 +38,11 @@ public class ArrayOfFloat  implements java.io.Serializable {
         this._float = _float;
     }
 
+    
+    /** 
+     * @param i
+     * @return float
+     */
     public float get_float(int i) {
         return this._float[i];
     }

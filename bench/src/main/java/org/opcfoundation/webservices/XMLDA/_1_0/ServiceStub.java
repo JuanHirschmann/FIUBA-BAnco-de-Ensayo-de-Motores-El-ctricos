@@ -535,6 +535,11 @@ oper.setReturnQName(new javax.xml.namespace.QName("http://opcfoundation.org/webs
 
     }
 
+    
+    /** 
+     * @return Call
+     * @throws java.rmi.RemoteException
+     */
     protected org.apache.axis.client.Call createCall() throws java.rmi.RemoteException {
         try {
             org.apache.axis.client.Call _call = super._createCall();

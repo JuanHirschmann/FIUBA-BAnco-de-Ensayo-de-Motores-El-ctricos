@@ -38,6 +38,11 @@ public class ArrayOfAnyType  implements java.io.Serializable {
         this.anyType = anyType;
     }
 
+    
+    /** 
+     * @param i
+     * @return Object
+     */
     public java.lang.Object getAnyType(int i) {
         return this.anyType[i];
     }

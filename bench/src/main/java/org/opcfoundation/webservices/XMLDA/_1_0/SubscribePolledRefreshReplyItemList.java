@@ -41,6 +41,11 @@ public class SubscribePolledRefreshReplyItemList  implements java.io.Serializabl
         this.items = items;
     }
 
+    
+    /** 
+     * @param i
+     * @return ItemValue
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.ItemValue getItems(int i) {
         return this.items[i];
     }

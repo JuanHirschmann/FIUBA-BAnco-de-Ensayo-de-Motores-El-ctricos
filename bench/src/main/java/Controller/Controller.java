@@ -12,6 +12,7 @@ import static Model.Constants.TORQUE_TIME_BUFFER_SIZE;
 
 import java.lang.Math;
 import java.net.ConnectException;
+import java.text.NumberFormat;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,19 +36,55 @@ public class Controller {
     public Controller() {
     };
 
-    public void setTestEndTime(String endtime_ms) throws ConnectException {
-        model.setTestEndTime(endtime_ms);
+    /**
+     * Sets test endtime parameter, checks for integer conversion and positive value
+     * 
+     * @param endtime_ms
+     * @throws ConnectException
+     */
+    public void setTestEndTime(String endtime_ms) throws Exception {
+        try {
+            Integer endtime = Integer.valueOf(endtime_ms);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "El formato del tiempo de finalización no puede convertirse a un número entero");
+        }
+        if (Integer.valueOf(endtime_ms) <= 0) {
+            throw new IllegalArgumentException(
+                    "El tiempo de finalización no puede convertirse ser igual o menor a cero");
+
+        }
+        if (model.isConnected()) {
+
+            model.setTestEndTime(endtime_ms);
+        }
     }
 
+    /**
+     * Fills TorqueTimeValues from a csv file with format Time[ms],Torque
+     * command[Nm]. Doesn't accept Headers
+     * 
+     * @param filepath
+     */
     public void createTorqueTimeFromCSV(String filepath) {
         this.torqueTimeValues.fromCSV(filepath);
         System.out.println(torqueTimeValues.length());
     }
 
+    /**
+     * Extends the selected torque time waveform by an integer number of periods.
+     * 
+     * @param periods
+     */
     public void extendTorqueTimeValues(int periods) {
         this.torqueTimeValues.extend(periods);
     }
 
+    /**
+     * Gets the loaded torque time values.
+     * 
+     * @return TorqueTimeValues
+     */
     public TorqueTimeValues getTorqueTimeValues() {
         // TorqueTimeValues output= new TorqueTimeValues(this.torqueTimeValues);
         // System.out.println(torqueTimeValues.length());
@@ -61,7 +98,11 @@ public class Controller {
 
     }
 
+    /*
+     * starts the measurements for variables at a fixed rate
+     */
     public void startMeasurements() {
+        // TODO: Asegurar que cada medición corra en un hilo por separado
         torqueTimer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 200, TimeUnit.MILLISECONDS);
         voltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 50, 200,
                 TimeUnit.MILLISECONDS);
@@ -102,6 +143,9 @@ public class Controller {
          */
     }
 
+    /*
+     * Stops measurment update
+     */
     public void stopMeasurements() {
         torqueTimer.shutdown();
         voltageTimer.shutdown();
@@ -110,6 +154,11 @@ public class Controller {
         speedTimer.shutdown();
     }
 
+    /**
+     * Sets the PLC state to RUN. Checks for server conection.
+     * 
+     * @throws ConnectException
+     */
     public void start() throws ConnectException {
         if (model.isConnected()) {
             try {
@@ -124,14 +173,28 @@ public class Controller {
         }
     }
 
+    /**
+     * Gets buffered variables meaurements.
+     * 
+     * @return MeasurementBuffer
+     */
     public MeasurementBuffer getMeasurementBuffer() {
         return measurementsBufferedValues;
     }
 
+    /*
+     * Clears the buffered measured variables
+     */
     public void clearMeasurementBuffer() {
         measurementsBufferedValues.clearBuffer();
     }
 
+    /**
+     * connects to server.
+     * 
+     * @param targetIP OPC XML-DA server IP
+     * @throws Exception Throws ConnectException when connection isn't possible
+     */
     public void connect(String targetIP) throws Exception {
         try {
 
@@ -142,6 +205,11 @@ public class Controller {
 
     }
 
+    /**
+     * Sets the PLC state to RUN. Checks for server conection.
+     * 
+     * @throws ConnectException
+     */
     public void PLCStart() throws Exception {
         if (model.isConnected()) {
             model.controllerOn();
@@ -152,10 +220,24 @@ public class Controller {
 
     }
 
+    /**
+     * Sets the PLC state to STOP. Checks for server conection.
+     * 
+     * @throws ConnectException
+     */
     public void PLCStop() throws Exception {
-        model.controllerOff();
+        if (model.isConnected()) {
+            model.controllerOff();
+        } else {
+            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+
+        }
     }
 
+    /**
+     * Turns on power for the Line Module and axis. Checks for server connectivity
+     * @throws Exception
+     */
     public void powerOn() throws Exception {
         if (model.isConnected()) {
             model.powerOn();
@@ -165,6 +247,10 @@ public class Controller {
 
     }
 
+    /**
+     * Turns off power for the Line Module and axis. Checks for server connectivity
+     * @throws Exception
+     */
     public void powerOff() throws Exception {
         if (model.isConnected()) {
             model.powerOff();
@@ -172,7 +258,10 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
-
+    /**
+     * Sets emergency stop command. Checks for server connectivity
+     * @throws Exception
+     */
     public void emergencyStop() throws Exception {
         if (model.isConnected()) {
             model.emergencyStop();
@@ -181,6 +270,10 @@ public class Controller {
         }
     }
 
+    /**
+     * Sets emergency stop release command. Checks for server connectivity
+     * @throws Exception
+     */
     public void emergencyRelease() throws Exception {
         if (model.isConnected()) {
             model.emergencyRelease();
@@ -189,8 +282,13 @@ public class Controller {
         }
     }
 
+    /**
+     * Selects Torque vs Time test type. 
+     *  Checks for server connectivity, CSV file length and maximum torque
+     * @throws Exception
+     */
     public void selectTorqueVsTime() throws ConnectException {
-        //TODO: SACAR EL !
+        // TODO: SACAR EL !
         if (!model.isConnected()) {
             if (this.torqueTimeValues.length() == 0) {
                 throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
@@ -203,7 +301,11 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
-
+    /**
+     * Selects Torque vs Time test type. 
+     *  Checks for server connectivity.
+     * @throws Exception
+     */
     public void selectTorqueVsSpeed() throws ConnectException {
         if (model.isConnected()) {
             model.selectTorqueVsSpeed();
@@ -211,9 +313,14 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
-
+    /**
+     * Sets torque vs speed test type parameters. Checks for server connection,
+     *  D parameter's maximum value and sign.  
+     *  Checks for server connectivity.
+     * @throws Exception
+     */
     public void setTorqueVsSpeedParameters(Map<String, TorqueEquationParameter> parameters) throws Exception {
-        //TODO: SACAR EL !
+        // TODO: SACAR EL !
         if (!model.isConnected()) {
             if (Float.valueOf(parameters.get("D").getValue()) < 0) {
                 throw new IllegalArgumentException("El valor del término inercial no puede ser negativo");
@@ -226,11 +333,18 @@ public class Controller {
         }
     }
 
+    /* 
+     * Checks if model is connected
+     */
     public boolean isModelConnected() {
         return model.isConnected();
     }
 
     // TODO: Agregar el TORQUE_COMMAND
+    /* 
+     * Implements the update of measurments on to a measurement
+     * buffer. 
+     */
     private class updateMeasurements implements Runnable {
         private String measurement;
         private long timestamp;

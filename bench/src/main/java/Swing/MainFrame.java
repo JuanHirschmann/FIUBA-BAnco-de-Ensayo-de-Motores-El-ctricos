@@ -29,10 +29,18 @@ public class MainFrame extends JFrame{
         add(userMessagePanel,BorderLayout.SOUTH);
         //pack();
     }
+    
+    /** 
+     * @return InputPanel
+     */
     public InputPanel getInputPanel()
     {
         return inputPanel;
     }
+    
+    /** 
+     * @param chart
+     */
     public void setChart(JFreeChart chart)
     {
         this.chartPanel.setChart(chart);

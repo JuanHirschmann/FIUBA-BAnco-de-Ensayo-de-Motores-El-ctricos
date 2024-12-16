@@ -38,6 +38,11 @@ public class ArrayOfShort  implements java.io.Serializable {
         this._short = _short;
     }
 
+    
+    /** 
+     * @param i
+     * @return short
+     */
     public short get_short(int i) {
         return this._short[i];
     }

@@ -38,6 +38,11 @@ public class ArrayOfUnsignedLong  implements java.io.Serializable {
         this.unsignedLong = unsignedLong;
     }
 
+    
+    /** 
+     * @param i
+     * @return UnsignedLong
+     */
     public org.apache.axis.types.UnsignedLong getUnsignedLong(int i) {
         return this.unsignedLong[i];
     }

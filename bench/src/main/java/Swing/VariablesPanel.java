@@ -11,6 +11,10 @@ public class VariablesPanel extends JPanel{
         setLayout(new WrapLayout());
         this.setPreferredSize(new Dimension(1100,100));
     }
+    
+    /** 
+     * @param enabled
+     */
     @Override
     public void setEnabled(boolean enabled)
     {

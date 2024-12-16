@@ -38,6 +38,11 @@ public class ArrayOfString  implements java.io.Serializable {
         this.string = string;
     }
 
+    
+    /** 
+     * @param i
+     * @return String
+     */
     public java.lang.String getString(int i) {
         return this.string[i];
     }

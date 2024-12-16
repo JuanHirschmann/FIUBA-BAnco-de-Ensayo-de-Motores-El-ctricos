@@ -38,6 +38,11 @@ public class ArrayOfDouble  implements java.io.Serializable {
         this._double = _double;
     }
 
+    
+    /** 
+     * @param i
+     * @return double
+     */
     public double get_double(int i) {
         return this._double[i];
     }

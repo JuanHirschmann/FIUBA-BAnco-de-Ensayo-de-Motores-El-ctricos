@@ -50,6 +50,12 @@ public class QualityBits implements java.io.Serializable {
     public static final QualityBits good = new QualityBits(_good);
     public static final QualityBits goodLocalOverride = new QualityBits(_goodLocalOverride);
     public java.lang.String getValue() { return _value_;}
+    
+    /** 
+     * @param value
+     * @return QualityBits
+     * @throws java.lang.IllegalArgumentException
+     */
     public static QualityBits fromValue(java.lang.String value)
           throws java.lang.IllegalArgumentException {
         QualityBits enumeration = (QualityBits)

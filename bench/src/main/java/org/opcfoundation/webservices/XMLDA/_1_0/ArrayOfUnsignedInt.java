@@ -38,6 +38,11 @@ public class ArrayOfUnsignedInt  implements java.io.Serializable {
         this.unsignedInt = unsignedInt;
     }
 
+    
+    /** 
+     * @param i
+     * @return UnsignedInt
+     */
     public org.apache.axis.types.UnsignedInt getUnsignedInt(int i) {
         return this.unsignedInt[i];
     }

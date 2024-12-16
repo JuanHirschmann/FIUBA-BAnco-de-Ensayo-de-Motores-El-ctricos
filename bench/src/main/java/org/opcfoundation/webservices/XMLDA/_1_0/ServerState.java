@@ -30,6 +30,12 @@ public class ServerState implements java.io.Serializable {
     public static final ServerState test = new ServerState(_test);
     public static final ServerState commFault = new ServerState(_commFault);
     public java.lang.String getValue() { return _value_;}
+    
+    /** 
+     * @param value
+     * @return ServerState
+     * @throws java.lang.IllegalArgumentException
+     */
     public static ServerState fromValue(java.lang.String value)
           throws java.lang.IllegalArgumentException {
         ServerState enumeration = (ServerState)

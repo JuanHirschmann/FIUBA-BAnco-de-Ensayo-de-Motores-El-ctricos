@@ -38,6 +38,11 @@ public class ArrayOfDecimal  implements java.io.Serializable {
         this.decimal = decimal;
     }
 
+    
+    /** 
+     * @param i
+     * @return BigDecimal
+     */
     public java.math.BigDecimal getDecimal(int i) {
         return this.decimal[i];
     }

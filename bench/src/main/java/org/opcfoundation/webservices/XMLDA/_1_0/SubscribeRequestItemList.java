@@ -53,6 +53,11 @@ public class SubscribeRequestItemList  implements java.io.Serializable {
         this.items = items;
     }
 
+    
+    /** 
+     * @param i
+     * @return SubscribeRequestItem
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.SubscribeRequestItem getItems(int i) {
         return this.items[i];
     }

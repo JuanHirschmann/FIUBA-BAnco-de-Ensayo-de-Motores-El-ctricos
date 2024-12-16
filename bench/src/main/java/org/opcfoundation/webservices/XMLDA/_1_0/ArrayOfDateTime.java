@@ -38,6 +38,11 @@ public class ArrayOfDateTime  implements java.io.Serializable {
         this.dateTime = dateTime;
     }
 
+    
+    /** 
+     * @param i
+     * @return Calendar
+     */
     public java.util.Calendar getDateTime(int i) {
         return this.dateTime[i];
     }

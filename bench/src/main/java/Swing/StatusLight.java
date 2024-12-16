@@ -9,6 +9,10 @@ public class StatusLight extends JPanel{
     boolean on=false;
     JLabel label= new JLabel();
     Color savedColor=new Color(1,1,1);
+    
+    /** 
+     * @param g
+     */
     @Override
     protected void paintComponent(Graphics g) {
         g.fillOval(0, 0, g.getClipBounds().width, g.getClipBounds().height);
@@ -21,6 +25,10 @@ public class StatusLight extends JPanel{
         label.setText(labelText);
         add(label);
     }
+    
+    /** 
+     * @param new_state
+     */
     void setState(boolean new_state)
     {   
         on=new_state;

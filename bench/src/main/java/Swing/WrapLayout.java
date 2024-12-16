@@ -169,6 +169,12 @@ public class WrapLayout extends FlowLayout
 	}
 	}
 
+	
+	/** 
+	 * @param dim
+	 * @param rowWidth
+	 * @param rowHeight
+	 */
 	/*
 	 *  A new row has been completed. Use the dimensions of this row
 	 *  to update the preferred size for the container.

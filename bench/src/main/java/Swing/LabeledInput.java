@@ -15,10 +15,18 @@ public class LabeledInput extends JTextField {
             inputLabel.setText(label);
             input.setColumns(columns);
         }
+        
+        /** 
+         * @param panel
+         */
         public void set(JPanel panel) {
             panel.add(inputLabel);
             panel.add(input);
         }
+        
+        /** 
+         * @param visible
+         */
         public void setVisible(boolean visible) {
             inputLabel.setVisible(visible);
             input.setVisible(visible);

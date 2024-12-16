@@ -93,6 +93,11 @@ public class ServerStatus  implements java.io.Serializable {
         this.supportedLocaleIDs = supportedLocaleIDs;
     }
 
+    
+    /** 
+     * @param i
+     * @return String
+     */
     public java.lang.String getSupportedLocaleIDs(int i) {
         return this.supportedLocaleIDs[i];
     }

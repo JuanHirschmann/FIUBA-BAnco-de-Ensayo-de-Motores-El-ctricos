@@ -38,6 +38,11 @@ public class ArrayOfUnsignedShort  implements java.io.Serializable {
         this.unsignedShort = unsignedShort;
     }
 
+    
+    /** 
+     * @param i
+     * @return UnsignedShort
+     */
     public org.apache.axis.types.UnsignedShort getUnsignedShort(int i) {
         return this.unsignedShort[i];
     }

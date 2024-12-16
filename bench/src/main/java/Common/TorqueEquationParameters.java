@@ -21,6 +21,10 @@ public class TorqueEquationParameters {
         this.addParameter("D",VAR_PATH,"INTERTIAL_TERM", "0", "[Nm/(RPM*s)]");
     }
 
+    
+    /** 
+     * @return Map<String, String>
+     */
     public Map<String, String> getParameterValues() {
         Map<String, String> output = new Hashtable<>();
         for (String key : this.parameterValue.keySet()) {

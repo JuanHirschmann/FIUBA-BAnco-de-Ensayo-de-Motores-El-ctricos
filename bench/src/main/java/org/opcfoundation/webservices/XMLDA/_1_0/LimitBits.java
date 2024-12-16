@@ -26,6 +26,12 @@ public class LimitBits implements java.io.Serializable {
     public static final LimitBits high = new LimitBits(_high);
     public static final LimitBits constant = new LimitBits(_constant);
     public java.lang.String getValue() { return _value_;}
+    
+    /** 
+     * @param value
+     * @return LimitBits
+     * @throws java.lang.IllegalArgumentException
+     */
     public static LimitBits fromValue(java.lang.String value)
           throws java.lang.IllegalArgumentException {
         LimitBits enumeration = (LimitBits)

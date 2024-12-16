@@ -38,6 +38,11 @@ public class ArrayOfLong  implements java.io.Serializable {
         this._long = _long;
     }
 
+    
+    /** 
+     * @param i
+     * @return long
+     */
     public long get_long(int i) {
         return this._long[i];
     }

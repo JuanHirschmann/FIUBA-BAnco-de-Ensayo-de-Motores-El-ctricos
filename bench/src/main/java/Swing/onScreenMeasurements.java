@@ -32,10 +32,20 @@ public class onScreenMeasurements {
         }
     }
 
+    
+    /** 
+     * @param varName
+     * @param displayName
+     * @param displayUnit
+     */
     public void addMeasuredVariable(String varName, String displayName, String displayUnit) {
         this.measurementLabels.put(varName, new JLabel());
         this.measurement.put(varName, new Measurement(displayName, displayUnit, 0));
     }
+    
+    /** 
+     * @param variable
+     */
     public void addMeasuredVariable(commands variable) {
         this.measurementLabels.put(variable.seriesName, new JLabel());
         this.measurement.put(variable.seriesName, new Measurement(variable.displayName, variable.displayUnit, 0));

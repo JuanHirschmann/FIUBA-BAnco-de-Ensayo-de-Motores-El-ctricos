@@ -1,19 +1,10 @@
 package Controller;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-
-import org.jfree.data.general.Dataset;
-
-import java.util.Collections;
-import static Model.Constants.GRAPH_BUFFER_SIZE;
 
 public class MeasurementBuffer {
     Map<String, ArrayList<Float>> data = new Hashtable<>();
@@ -31,12 +22,24 @@ public class MeasurementBuffer {
             this.data.put(key, new ArrayList<Float>(targetBuffer.data.get(key)));
         }
     }
+    
+    /** 
+     * Adds a time series (value, timestamp) for the measurement buffer. 
+     * @param time_series_name
+     */
     public void addTimeSeries(String time_series_name) {
         keyset.add(time_series_name);
         data.put(time_series_name, new ArrayList<Float>());
         data.put(time_series_name + "_timestamp", new ArrayList<Float>());
     };
 
+    
+    /** 
+     * Adds a measurement (value, timestamp) onto the measurement buffer. 
+     * @param time_series_name 
+     * @param measurement
+     * @param timestamp
+     */
     public void addValue(String time_series_name, float measurement, double timestamp) {
         if (data.get(time_series_name) == null) {
             this.addTimeSeries(time_series_name);
@@ -45,7 +48,9 @@ public class MeasurementBuffer {
         data.get(time_series_name).add(measurement);
         data.get(time_series_name + "_timestamp").add((float) timestamp);
     }
-
+    /* 
+     * Clears the whole measurement buffer
+     */
     public void clearBuffer() {
         for (String key : data.keySet()) {
 
@@ -58,18 +63,27 @@ public class MeasurementBuffer {
         this.data.get(time_series_name).clear();
         this.data.get(time_series_name + "_timestamp").clear();
     }
-
+    /* 
+     * Gets certain time series values from the buffer as an ArrayList. 
+     */
     public ArrayList<Float> getBufferedData(String time_series_name) {
         return new ArrayList<Float>(this.data.get(time_series_name));
     }
-
+    /* 
+     * Gets certain time series timestamps from the buffer as an ArrayList. 
+     */
     public ArrayList<Float> getBufferedDataTimestamp(String time_series_name) {
         return new ArrayList<Float>(this.data.get(time_series_name + "_timestamp"));
     }
-
+    /* 
+     * Gets the timeseries's keyset
+     */
     public Set<String> getKeySet() {
         return this.keyset;
     }
+    /* 
+     * Checks if measurement buffer is empty
+     */
     public Boolean isEmpty()
     {
         Boolean output=true;

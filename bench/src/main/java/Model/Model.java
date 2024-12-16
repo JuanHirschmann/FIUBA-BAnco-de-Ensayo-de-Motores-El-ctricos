@@ -74,6 +74,10 @@ public class Model {
 
     }
 
+    
+    /** 
+     * @return boolean
+     */
     public boolean isConnected() {
         return this.isConnected;
     }
@@ -355,6 +359,11 @@ public class Model {
         }
     }
 
+    
+    /** 
+     * @param endtime_ms
+     * @throws ConnectException
+     */
     public void setTestEndTime(String endtime_ms) throws ConnectException {
         writeVar(endtime_ms, VAR_PATH, TEST_RUNTIME);
     }

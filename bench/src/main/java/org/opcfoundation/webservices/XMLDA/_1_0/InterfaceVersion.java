@@ -20,6 +20,12 @@ public class InterfaceVersion implements java.io.Serializable {
     public static final java.lang.String _XML_DA_Version_1_0 = "XML_DA_Version_1_0";
     public static final InterfaceVersion XML_DA_Version_1_0 = new InterfaceVersion(_XML_DA_Version_1_0);
     public java.lang.String getValue() { return _value_;}
+    
+    /** 
+     * @param value
+     * @return InterfaceVersion
+     * @throws java.lang.IllegalArgumentException
+     */
     public static InterfaceVersion fromValue(java.lang.String value)
           throws java.lang.IllegalArgumentException {
         InterfaceVersion enumeration = (InterfaceVersion)

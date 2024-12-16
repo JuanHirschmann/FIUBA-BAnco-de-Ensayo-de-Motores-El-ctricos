@@ -64,6 +64,11 @@ public class GetPropertiesResponse  implements java.io.Serializable {
         this.propertyLists = propertyLists;
     }
 
+    
+    /** 
+     * @param i
+     * @return PropertyReplyList
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.PropertyReplyList getPropertyLists(int i) {
         return this.propertyLists[i];
     }

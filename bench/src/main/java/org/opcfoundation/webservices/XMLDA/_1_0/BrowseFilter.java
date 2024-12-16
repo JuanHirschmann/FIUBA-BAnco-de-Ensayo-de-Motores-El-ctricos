@@ -24,6 +24,12 @@ public class BrowseFilter implements java.io.Serializable {
     public static final BrowseFilter branch = new BrowseFilter(_branch);
     public static final BrowseFilter item = new BrowseFilter(_item);
     public java.lang.String getValue() { return _value_;}
+    
+    /** 
+     * @param value
+     * @return BrowseFilter
+     * @throws java.lang.IllegalArgumentException
+     */
     public static BrowseFilter fromValue(java.lang.String value)
           throws java.lang.IllegalArgumentException {
         BrowseFilter enumeration = (BrowseFilter)

@@ -15,10 +15,18 @@ public class TorqueEquationParameter {
         this.parameterUnit = parameterUnit;
     }
 
+    
+    /** 
+     * @param newvalue
+     */
     public void update(String newvalue)
     {
         this.parameterValue=newvalue;
     }
+    
+    /** 
+     * @return String
+     */
     public String getValue()
     {
         return this.parameterValue;

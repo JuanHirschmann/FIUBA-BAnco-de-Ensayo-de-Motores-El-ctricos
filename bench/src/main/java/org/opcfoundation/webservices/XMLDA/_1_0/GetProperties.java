@@ -59,6 +59,11 @@ public class GetProperties  implements java.io.Serializable {
         this.itemIDs = itemIDs;
     }
 
+    
+    /** 
+     * @param i
+     * @return ItemIdentifier
+     */
     public org.opcfoundation.webservices.XMLDA._1_0.ItemIdentifier getItemIDs(int i) {
         return this.itemIDs[i];
     }
