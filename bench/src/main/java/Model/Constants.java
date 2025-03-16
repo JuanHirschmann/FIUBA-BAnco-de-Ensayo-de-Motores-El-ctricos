@@ -45,6 +45,7 @@ public final class Constants {
     public static final String SOFTWARE_START = "unit/ladder.SOFTWARE_START_BUTTON";
     public static final String TORQUE_SETPOINT = "glob/TORQUE_SETPOINT";
     public static final String CLEAR_TO_RECIEVE = "glob/CLEAR_TO_RECEIVE";
+    public static final String SAVE_TO_BUFFER = "glob/SAVE_TO_BUFFER";
     public static final String SIMULATOR_SPEED_LIMIT = "glob/SIMULATOR_SPEED_LIMIT";
     //TODO: Ver bien como se llaman los vectores
     public static final String  TORQUE_TIME_VALUES = "glob/TORQUE_VALUES";

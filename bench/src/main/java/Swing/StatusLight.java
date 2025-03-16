@@ -21,7 +21,9 @@ public class StatusLight extends JPanel{
     }
     public StatusLight(String labelText)
     {
-        this.setBackground(Color.RED);;
+        
+        this.setOpaque(true);
+        this.setBackground(Color.GRAY);;
         label.setText(labelText);
         add(label);
     }
@@ -37,8 +39,27 @@ public class StatusLight extends JPanel{
             savedColor=Color.RED;
         }
     }
-    void setColor(Color color)
+    public void setColor(Color color)
     {
         this.setBackground(color);
+    }
+    
+    public void red()
+    {
+        this.setBackground(Color.RED);
+        savedColor=Color.RED;
+    }
+    
+    public void yellow()
+    {
+        this.setBackground(Color.YELLOW);
+        savedColor=Color.YELLOW;
+    }
+
+    
+    public void green()
+    {
+        this.setBackground(Color.GREEN);
+        savedColor=Color.GREEN;
     }
 }

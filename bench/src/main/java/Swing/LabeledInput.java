@@ -35,7 +35,8 @@ public class LabeledInput extends JTextField {
         public void setText(String text) {
             input.setText(text);
         }
-        public String getValue() {
+        @Override
+        public String getText() {
             return input.getText();
         }
     }

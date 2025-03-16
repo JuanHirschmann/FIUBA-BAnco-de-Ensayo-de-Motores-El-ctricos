@@ -23,6 +23,7 @@ import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 //import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
 //import static Model.Constants.NEW_SPEED_SETPOINT_LOAD_AXIS;
 import static Model.Constants.OPERATION_MODE;
+import static Model.Constants.SAVE_TO_BUFFER;
 
 import org.opcfoundation.webservices.XMLDA._1_0.ItemValue;
 
@@ -65,17 +66,15 @@ public class Model {
         }
         // Checks if known variable exists
         try {
-
-            this.readVar(VAR_PATH, "_RUN");
-            isConnected = true;
+            isConnected = true; // Force readVar
+            this.readVar(VAR_PATH, OPERATION_MODE);
         } catch (Exception e) {
             isConnected = false;
         }
 
     }
 
-    
-    /** 
+    /**
      * @return boolean
      */
     public boolean isConnected() {
@@ -129,7 +128,8 @@ public class Model {
                 // jLabelStatus.setText("readResponse == null");
             }
         } catch (Exception exception) {
-            System.out.println("Toy aca2");
+
+            System.out.println(exception);
 
             System.out.println("No se encontró la variable " + varName + " en el path: " + varPath);
             throw new ConnectException("No se encontró la variable " + varName + " en el path: " + varPath);
@@ -301,8 +301,9 @@ public class Model {
         boolean output = false;
         try {
             String CTR = readVar(VAR_PATH, CLEAR_TO_RECIEVE);
-            if (CTR == "TRUE") {
-                output = false;
+            System.err.println(CTR);
+            if (CTR == "true") {
+                output = true;
             }
         } catch (ConnectException e) {
             System.out.println(e.getMessage());
@@ -322,12 +323,25 @@ public class Model {
      *                  torque[i]
      * @throws ConnectException
      */
-    public void writeBuffer(List<String> timestamp, List<String> torque) throws ConnectException {
-        for (int i = 0; i < TORQUE_TIME_BUFFER_SIZE; i++) {
+    public void writeBuffer(List<String> timestamp, List<String> torque) throws Exception {
+        System.err.println("write buffer");
+        System.err.println(timestamp.size());
+        //TODO: si esta bien implementado, el control mide tiempo decreciente y corta
+        for (int i = 0; i < timestamp.size(); i++) {
             // TODO: Ver bien como se llaman los vectores
-            writeVar(torque.get(i), VAR_PATH, TORQUE_TIME_VALUES + i);
-            writeVar(timestamp.get(i), VAR_PATH, TIMESTAMP + i);
+            System.err.println(i);
+            writeVar(torque.get(i), VAR_PATH, TORQUE_TIME_VALUES + "[" + i + "]");
+            writeVar(timestamp.get(i), VAR_PATH, TIMESTAMP + "[" + i + "]");
+            /* if (timestamp.size() <= i) {
+                writeVar("0", VAR_PATH, TORQUE_TIME_VALUES + "[" + i + "]");
+                writeVar("0", VAR_PATH, TIMESTAMP + "[" + i + "]");
+
+            } else {
+
+            } */
         }
+        this.saveToBuffer();
+        System.err.println("Escribi buffer");
     }
 
     /**
@@ -359,8 +373,7 @@ public class Model {
         }
     }
 
-    
-    /** 
+    /**
      * @param endtime_ms
      * @throws ConnectException
      */
@@ -398,4 +411,10 @@ public class Model {
         writeVar(torque_setpoint.toString(), VAR_PATH, TORQUE_SETPOINT);
     }
 
+    public void saveToBuffer() throws Exception {
+        this.writeVar("TRUE", VAR_PATH, SAVE_TO_BUFFER);
+        Thread.sleep(50);
+        this.writeVar("FALSE", VAR_PATH, SAVE_TO_BUFFER);
+
+    }
 }

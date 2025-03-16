@@ -53,7 +53,7 @@ public class InputPanel extends JPanel {
     public JLabel testPeriodLabel = new JLabel("Cantidad de periodos a ensayar");
     public SpinnerModel numericModel = new SpinnerNumberModel(1, 1, 99, 1);
     public JSpinner testPeriodsSpinner = new JSpinner(numericModel);
-    
+    public JLabel itemsLoadedLabel = new JLabel("");
     public StatusLight powerOnIndicator=new StatusLight("ALM");
     public StatusLight connectionIndicator=new StatusLight("CONN");
     public StatusLight semaphoreIndicator=new StatusLight("STATUS");
@@ -67,7 +67,7 @@ public class InputPanel extends JPanel {
     {
         
         statusPanel.setLayout( new GridLayout(0,1));
-        controlPanel.setBackground(Color.GREEN);
+        //controlPanel.setBackground(Color.GREEN);
         targetIP.setText(DEFAULT_SERVER_ADDRESS);
         controlPanel.add(buttonConnect);
         controlPanel.add(powerOnButton);
@@ -77,12 +77,13 @@ public class InputPanel extends JPanel {
         targetIP.set(controlPanel);
         
         //variablesPanel
-        variablesPanel.setBackground(Color.YELLOW);
+        //variablesPanel.setBackground(Color.YELLOW);
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_TIME);
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_SPEED);
         variablesPanel.add(torqueTestModeComboBox);
         variablesPanel.add(openFileButton);
         variablesPanel.add(filename);
+        variablesPanel.add(itemsLoadedLabel);
         variablesPanel.add(torqueEquation);
         torqueEquationParameters.setParameters(variablesPanel);
         variablesPanel.add(testPeriodLabel);
@@ -104,7 +105,7 @@ public class InputPanel extends JPanel {
         this.displayedMeasurements.addMeasuredVariable(commands.CURRENT);
         this.displayedMeasurements.addMeasuredVariable(commands.SPEED);
         this.displayedMeasurements.addMeasuredVariable(commands.TORQUE_COMMAND);
-        userMsgPanel.setBackground(Color.WHITE);
+        //userMsgPanel.setBackground(Color.WHITE);
         displayedMeasurements.setMeasurements(userMsgPanel);
         
 

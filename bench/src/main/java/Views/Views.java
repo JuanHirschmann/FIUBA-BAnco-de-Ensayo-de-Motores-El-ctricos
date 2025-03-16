@@ -226,7 +226,49 @@ public class Views implements ViewListener {
         this.torqueVsTimeVisibility(true);
 
     }
+    public void updateTorqueTimeLoad(int currentValue,int finalValue)
+    {
+        String output= String.valueOf(currentValue)+" / "+String.valueOf(finalValue);
+        frame.getInputPanel().itemsLoadedLabel.setText(output);
 
+    }
+    public void updateConnectionStatus(boolean isConnected)
+    {   
+        if( isConnected)
+        {
+
+            frame.getInputPanel().connectionIndicator.green();
+        }else
+        {
+            
+            frame.getInputPanel().connectionIndicator.red();
+        }
+    }
+    public void updateALMStatus(boolean isConnected)
+    {   
+        if( isConnected)
+        {
+
+            frame.getInputPanel().powerOnIndicator.green();
+        }else
+        {
+            
+            frame.getInputPanel().powerOnIndicator.green();
+        }
+    }
+    
+    public void updateLoadedTestStatus(boolean isLoaded)
+    {   
+        if( isLoaded)
+        {
+
+            frame.getInputPanel().loadedTestIndicator.green();
+        }else
+        {
+            
+            frame.getInputPanel().loadedTestIndicator.red();
+        }
+    }
     private void setup() {
         frame.getInputPanel().startButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().emergencyButton.addActionListener(new ButtonHandler());
@@ -242,6 +284,7 @@ public class Views implements ViewListener {
         this.blockInput(testStates.INITIAL);
 
     }
+
 
     private void blockInput(testStates currentStep) {
         if (currentStep == testStates.INITIAL) {
@@ -392,6 +435,7 @@ public class Views implements ViewListener {
             if (getController().getTorqueTimeValues().length() != 0) {
 
                 getController().extendTorqueTimeValues((int) frame.getInputPanel().testPeriodsSpinner.getValue());
+                
                 plotTorqueTime();
             }
         }
@@ -405,6 +449,7 @@ public class Views implements ViewListener {
         frame.getInputPanel().torqueEquationParameters.setVisible(!visible);
         frame.getInputPanel().testPeriodLabel.setVisible(visible);
         frame.getInputPanel().testPeriodsSpinner.setVisible(visible);
+        frame.getInputPanel().itemsLoadedLabel.setVisible(visible);
         frame.getContentPane().revalidate();
         frame.getContentPane().repaint();
     }
@@ -585,8 +630,7 @@ public class Views implements ViewListener {
 
                         getController().selectTorqueVsTime();
                         blockInput(testStates.TEST_RUNNING);
-                        // getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
-
+                        //getController().setTorqueVsTime();
                         /*
                          * TorqueTimeValues torqueTimeValue = this.getTorqueTimeValues();
                          * // getController().selectTorqueVsTime();
@@ -627,12 +671,13 @@ public class Views implements ViewListener {
                     frame.getInputPanel().filename.setText("");
                 }
             } else if (CONNECT_BUTTON_LABEL.equals(cmd)) {
+
                 String url = getTargetIP();
                 System.err.println(url);
                 try {
 
                     getController().connect(url);
-                    Thread.sleep(100);
+                    //Thread.sleep(1000);
                     getController().PLCStart();
                     blockInput(testStates.PLC_CONNECTED);
                 } catch (Exception e) {

@@ -32,6 +32,7 @@ public class Controller {
     ScheduledExecutorService powerTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService speedTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService bufferTimer = Executors.newScheduledThreadPool(10);
+    ScheduledExecutorService lowPriorityTimer = Executors.newScheduledThreadPool(10);
 
     public Controller() {
     };
@@ -46,6 +47,7 @@ public class Controller {
         try {
             Integer endtime = Integer.valueOf(endtime_ms);
         } catch (NumberFormatException e) {
+            System.err.println(e);
             throw new IllegalArgumentException(
                     "El formato del tiempo de finalización no puede convertirse a un número entero");
         }
@@ -110,6 +112,7 @@ public class Controller {
                 TimeUnit.MILLISECONDS);
         powerTimer.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 150, 200, TimeUnit.MILLISECONDS);
         speedTimer.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 200, 200, TimeUnit.MILLISECONDS);
+        
         // Meter estado de LEDs
         // Meter update de arrays
         /*
@@ -199,6 +202,9 @@ public class Controller {
         try {
 
             model.connect(targetIP);
+            System.out.println(targetIP);
+            lowPriorityTimer.scheduleAtFixedRate(new lowPriorityUpdate(), 20, 400, TimeUnit.MILLISECONDS);
+        
         } catch (Exception e) {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
@@ -236,6 +242,7 @@ public class Controller {
 
     /**
      * Turns on power for the Line Module and axis. Checks for server connectivity
+     * 
      * @throws Exception
      */
     public void powerOn() throws Exception {
@@ -249,6 +256,7 @@ public class Controller {
 
     /**
      * Turns off power for the Line Module and axis. Checks for server connectivity
+     * 
      * @throws Exception
      */
     public void powerOff() throws Exception {
@@ -258,8 +266,10 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
+
     /**
      * Sets emergency stop command. Checks for server connectivity
+     * 
      * @throws Exception
      */
     public void emergencyStop() throws Exception {
@@ -272,6 +282,7 @@ public class Controller {
 
     /**
      * Sets emergency stop release command. Checks for server connectivity
+     * 
      * @throws Exception
      */
     public void emergencyRelease() throws Exception {
@@ -283,27 +294,34 @@ public class Controller {
     }
 
     /**
-     * Selects Torque vs Time test type. 
-     *  Checks for server connectivity, CSV file length and maximum torque
+     * Selects Torque vs Time test type.
+     * Checks for server connectivity, CSV file length and maximum torque
+     * 
      * @throws Exception
      */
     public void selectTorqueVsTime() throws ConnectException {
         // TODO: SACAR EL !
-        if (!model.isConnected()) {
+        if (model.isConnected()) {
             if (this.torqueTimeValues.length() == 0) {
                 throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
             } else if (this.torqueTimeValues.getMaxTorque() > 30) {
                 throw new IllegalArgumentException("Torque máximo excedido");
             }
+            bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 0, 15500, TimeUnit.MILLISECONDS);
             model.selectTorqueVsTime();
-            model.setTestEndTime(null);
+            Float last_timestamp= Float.valueOf( this.torqueTimeValues.getTimestamp(this.torqueTimeValues.length() - 1));
+            System.out.println(last_timestamp.toString());
+            System.out.print("aca");
+            model.setTestEndTime(last_timestamp.toString());
         } else {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
+
     /**
-     * Selects Torque vs Time test type. 
-     *  Checks for server connectivity.
+     * Selects Torque vs Time test type.
+     * Checks for server connectivity.
+     * 
      * @throws Exception
      */
     public void selectTorqueVsSpeed() throws ConnectException {
@@ -313,27 +331,35 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
+
     /**
      * Sets torque vs speed test type parameters. Checks for server connection,
-     *  D parameter's maximum value and sign.  
-     *  Checks for server connectivity.
+     * D parameter's maximum value and sign.
+     * Checks for server connectivity.
+     * 
      * @throws Exception
      */
     public void setTorqueVsSpeedParameters(Map<String, TorqueEquationParameter> parameters) throws Exception {
         // TODO: SACAR EL !
-        if (!model.isConnected()) {
+        if (model.isConnected()) {
             if (Float.valueOf(parameters.get("D").getValue()) < 0) {
+                
+                view.updateLoadedTestStatus(false);
                 throw new IllegalArgumentException("El valor del término inercial no puede ser negativo");
             } else if (Float.valueOf(parameters.get("D").getValue()) > 0.3) {
+                
+                view.updateLoadedTestStatus(false);
                 throw new IllegalArgumentException("El valor del término inercial no puede ser mayor a 0.3");
             }
             model.setTorqueVsSpeedParameters(parameters);
+            view.updateLoadedTestStatus(true);
         } else {
+            view.updateLoadedTestStatus(false);
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
 
-    /* 
+    /*
      * Checks if model is connected
      */
     public boolean isModelConnected() {
@@ -341,16 +367,16 @@ public class Controller {
     }
 
     // TODO: Agregar el TORQUE_COMMAND
-    /* 
+    /*
      * Implements the update of measurments on to a measurement
-     * buffer. 
+     * buffer.
      */
     private class updateMeasurements implements Runnable {
         private String measurement;
         private long timestamp;
         private long measurement_start_time = 0;
         private commands command;
-
+        private long delay;
         updateMeasurements(commands command) {
             this.command = command;
         };
@@ -361,12 +387,18 @@ public class Controller {
             if (measurement_start_time == 0) {
                 this.measurement_start_time = System.currentTimeMillis();
             }
+            
             this.timestamp = System.currentTimeMillis() - measurement_start_time;
             // System.out.println(timestamp);
             try {
                 if (model.isConnected()) {
-
+                    this.delay=System.currentTimeMillis();
                     this.measurement = model.readVar(command.varPath, command.varName);
+                    this.delay=System.currentTimeMillis()-this.delay;
+                    System.out.print("Delay: ");
+                    System.out.println(this.delay);
+                    
+                    measurementsBufferedValues.addValue(command.seriesName, Float.valueOf(this.measurement), timestamp-delay/2);
                 } else {
                     throw new Exception("d");
                 }
@@ -375,55 +407,115 @@ public class Controller {
 
                 // TODO: Cuando no hay un dato usar algún tipo de promedio ponderado en vez de
                 // esto.
-                this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
-                try {
-                    Thread.sleep(150);
-                } catch (InterruptedException exception) {
-                    System.out.println("nit");
-                } // Simula demora en leer datos
+                // TODO: Probablemente lo mejor sea no sumar el punto de medicion
+                // measurementsBufferedValues.getBufferedData(command.seriesName).
+                // this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
+                System.out.println("Falla en medición");
+
+                measurementsBufferedValues.addValue(command.seriesName, Float.NaN, timestamp);
+                // measurementsBufferedValues.addValue(command.seriesName, Float.NaN,
+                // timestamp);
+                /*
+                 * try {
+                 * Thread.sleep(150);
+                 * } catch (InterruptedException exception) {
+                 * System.out.println("nit");
+                 * }
+                 */// Simula demora en leer datos
             }
-            measurementsBufferedValues.addValue(command.seriesName, Float.valueOf(this.measurement), timestamp);
         }
 
     }
+    /*
+     * Implements the update of keepalive variable.
+     */
+    private class lowPriorityUpdate implements Runnable {
+        
+        lowPriorityUpdate() {
+        };
 
+        public void run() {
+            // Esto termina tienendo un lag de 200ms o mas
+            try {
+                if (model.isConnected()) {;
+                    model.writeVar("FALSE","SIMOTION", "glob/KEEPALIVE");
+                    view.updateConnectionStatus(true);
+                    //TODO Update ALM
+                    //TODO Update Test Status
+                    //view.updateConnectionStatus(false);
+                    
+                } else {
+                    view.updateConnectionStatus(false);
+                    //view.updateConnectionStatus(false);
+                    throw new Exception("Keepalive failed");
+                    
+                }
+
+            } catch (Exception e) {
+                
+                System.err.println(e.getMessage());
+            }
+
+               
+        }
+
+    }
     private class sendTorqueCommands implements Runnable {
         private int itemsLoadedOnBuffer = 0;
         private boolean allDataLoaded = false;
         private ArrayList<String> timestamp = new ArrayList<String>();
         private ArrayList<String> torque = new ArrayList<String>();
 
-        sendTorqueCommands(Model model, ArrayList<String> timestamp, ArrayList<String> torque) {
+        sendTorqueCommands() {
             this.itemsLoadedOnBuffer = 0;
-            this.timestamp = timestamp;
-            this.torque = torque;
+            this.timestamp = torqueTimeValues.getTimestamp();
+            this.torque = torqueTimeValues.getValue();
 
         };
 
         public void run() {
             // Esto termina tienendo un lag de 200ms o mas
+            view.updateTorqueTimeLoad(this.itemsLoadedOnBuffer,timestamp.size());
+            
             int chunkEnd = 0;
             System.out.println(timestamp.size());
+            System.out.println(itemsLoadedOnBuffer);
+            if(this.itemsLoadedOnBuffer==timestamp.size())
+            {
+                this.allDataLoaded=true;
+                view.updateLoadedTestStatus(allDataLoaded);
+            
+            }else
+            {
+                this.allDataLoaded=false;
+                view.updateLoadedTestStatus(allDataLoaded);
+            }
             if (model.bufferCTR() && !this.allDataLoaded) {
+                
+                System.err.println("entre");
                 if (itemsLoadedOnBuffer + TORQUE_TIME_BUFFER_SIZE > timestamp.size()) {
                     chunkEnd = timestamp.size();
 
-                    this.allDataLoaded = true;
+                    //this.allDataLoaded = true;
                 } else {
                     chunkEnd = itemsLoadedOnBuffer + TORQUE_TIME_BUFFER_SIZE;
                 }
-                // try {
+                try {
+                    System.err.println("escribiendo buffer");
+                    
+                    System.err.println(itemsLoadedOnBuffer);    
+                    
+                    System.err.println(chunkEnd);    
+                    model.writeBuffer(timestamp.subList(itemsLoadedOnBuffer, chunkEnd),
+                            torque.subList(itemsLoadedOnBuffer, chunkEnd));
+                    this.itemsLoadedOnBuffer = chunkEnd;
+                    System.err.println(this.itemsLoadedOnBuffer);
 
-                // model.writeBuffer(timestamp.subList(itemsLoadedOnBuffer, chunkEnd),
-                // torque.subList(itemsLoadedOnBuffer, chunkEnd));
-                this.itemsLoadedOnBuffer = chunkEnd;
-                System.err.println(this.itemsLoadedOnBuffer);
-                /*
-                 * } catch (ConnectException e) {
-                 * System.err.println(e.getMessage());
-                 * this.allDataLoaded=false;
-                 * }
-                 */
+
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                    //this.allDataLoaded = false;
+                }
 
             }
         }

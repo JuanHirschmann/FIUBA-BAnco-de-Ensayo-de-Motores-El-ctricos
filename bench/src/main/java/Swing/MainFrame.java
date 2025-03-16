@@ -17,7 +17,7 @@ public class MainFrame extends JFrame{
     public MainFrame()
     {
         setSize(1200,800);
-        setLocation(1920,0);
+        setLocation(0,0);
         setTitle("Banco de ensayo - FIUBA");
         setLayout(new BorderLayout(10,0));
         setVisible(true);
