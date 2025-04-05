@@ -65,11 +65,16 @@ public class TorqueTimeValues {
         Float time_delta;
         int initialLength=onePeriodLength;
         this.dropExtentions();
-        for(int i=initialLength;i<(periods*initialLength);i++)
+        for(int i=initialLength;i<(periods*initialLength)-1;i++)
         {   
             aux=data.get("value").get(i-initialLength);
+            
             data.get("value").add(aux);
             aux=data.get("timestamp").get(i-initialLength);
+            if (Float.valueOf(aux)==0)
+            {
+                aux="1";
+            }
             time_delta=Float.valueOf(aux)+Float.valueOf(data.get("timestamp").get(initialLength-1));
             data.get("timestamp").add(String.valueOf(time_delta));
             length++;
