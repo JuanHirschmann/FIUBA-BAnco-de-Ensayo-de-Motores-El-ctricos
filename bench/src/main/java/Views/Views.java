@@ -13,18 +13,20 @@ import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
 import static Views.Constants.WRITE_CSV;
-
-//import java.awt.List;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Shape;
+import java.awt.desktop.PrintFilesEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.geom.Ellipse2D;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -32,6 +34,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
@@ -56,7 +59,9 @@ import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.renderer.xy.XYSplineRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -78,6 +83,8 @@ import Controller.MeasurementBuffer;
 import Controller.TorqueTimeValues;
 import Controller.ViewListener;
 import Model.Constants.commands;
+import Model.Constants.serverSideTestStatus;
+import Model.Constants.testStatus;
 
 public class Views implements ViewListener {
 
@@ -86,34 +93,16 @@ public class Views implements ViewListener {
     private MainFrame frame = new MainFrame();
     private SwingPlotWorker plotUpdater = new SwingPlotWorker();
 
-    
-    /** 
+    /**
      * @param controller
      */
     public void setController(Controller controller) {
         appController = controller;
     };
 
-    public void shutdownRequest() {
-    }
-
-    public void connectRequest() {
-    }
-
-    public void connectPowerRequest() {
-    }
-
-    public void startTestRequest() {
-    }
-
-    public void pauseTestRequest() {
-    }
-
-    public void emergencyStopRequest() {
-    }
-
-    
-    /** 
+    /**
+     * Returns controller instance
+     * 
      * @return Controller
      */
     public Controller getController() {
@@ -177,7 +166,13 @@ public class Views implements ViewListener {
                     ArrayList<Float> timestamp = new ArrayList<Float>(data.getBufferedDataTimestamp(key));
 
                     for (int i = 0; i < value.size(); i++) {
-                        mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
+                        if (key == "speed") {
+                            mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
+                        } else {
+                            mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
+
+                        }
+
                     }
 
                 }
@@ -206,15 +201,6 @@ public class Views implements ViewListener {
 
             }
 
-            /*
-             * try {
-             * Thread.sleep(250);
-             * } catch (InterruptedException e) {
-             * // eat it. caught when interrupt is called
-             * System.out.println("MySwingWorker shut down.");
-             * }
-             */
-
         }
 
     }
@@ -226,49 +212,78 @@ public class Views implements ViewListener {
         this.torqueVsTimeVisibility(true);
 
     }
-    public void updateTorqueTimeLoad(int currentValue,int finalValue)
-    {
-        String output= String.valueOf(currentValue)+" / "+String.valueOf(finalValue);
+
+    /**
+     * Updates external's buffer load elements
+     * 
+     * @param currentValue current elements loaded on buffer
+     * @param finalValue   total elements to load
+     */
+    public void updateTorqueTimeLoad(int currentValue, int finalValue) {
+        String output = String.valueOf(currentValue) + " / " + String.valueOf(finalValue);
         frame.getInputPanel().itemsLoadedLabel.setText(output);
 
     }
-    public void updateConnectionStatus(boolean isConnected)
-    {   
-        if( isConnected)
-        {
+
+    /**
+     * Updates the connection to PLC status
+     * 
+     * @param isConnected
+     */
+    public void updateConnectionStatus(boolean isConnected) {
+        if (isConnected) {
 
             frame.getInputPanel().connectionIndicator.green();
-        }else
-        {
-            
+        } else {
+
             frame.getInputPanel().connectionIndicator.red();
         }
     }
-    public void updateALMStatus(boolean isConnected)
-    {   
-        if( isConnected)
-        {
+
+    /**
+     * Updates server-side test status on semaphore indicator
+     * 
+     * @param testState serverSideTestStatus (NOT_STARTED, RUNNING, STOPPED....)
+     */
+    public void updateTestStatus(serverSideTestStatus testState) {
+        frame.getInputPanel().semaphoreIndicator.setColor(testState.getColor());
+        frame.getInputPanel().semaphoreIndicator.setText(testState.name());
+
+    }
+
+    /**
+     * Changes power connection power indicator
+     * 
+     * @param isConnected
+     */
+    public void updateALMStatus(boolean isConnected) {
+        if (isConnected) {
 
             frame.getInputPanel().powerOnIndicator.green();
-        }else
-        {
-            
-            frame.getInputPanel().powerOnIndicator.green();
+        } else {
+
+            frame.getInputPanel().powerOnIndicator.red();
         }
     }
-    
-    public void updateLoadedTestStatus(boolean isLoaded)
-    {   
-        if( isLoaded)
-        {
+
+    /**
+     * updates loaded test status on test indicator.
+     * 
+     * @param isLoaded
+     */
+    public void updateLoadedTestStatus(boolean isLoaded) {
+        if (isLoaded) {
 
             frame.getInputPanel().loadedTestIndicator.green();
-        }else
-        {
-            
+        } else {
+
             frame.getInputPanel().loadedTestIndicator.red();
         }
     }
+
+    /*
+     * Set up of main frame panels.
+     */
     private void setup() {
         frame.getInputPanel().startButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().emergencyButton.addActionListener(new ButtonHandler());
@@ -285,7 +300,11 @@ public class Views implements ViewListener {
 
     }
 
-
+    /**
+     * Blocks user access considering current test step and input error
+     * 
+     * @param currentStep
+     */
     private void blockInput(testStates currentStep) {
         if (currentStep == testStates.INITIAL) {
             frame.getInputPanel().buttonConnect.setEnabled(true);
@@ -361,6 +380,11 @@ public class Views implements ViewListener {
         ;
     }
 
+    /**
+     * Creates Chart plot
+     * 
+     * @return JFreeChart
+     */
     private JFreeChart createChart() {
 
         mainDataset.put(commands.TORQUE.seriesName, new XYSeriesCollection());
@@ -383,12 +407,23 @@ public class Views implements ViewListener {
         topPlot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
         topPlot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
         topPlot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
+        topPlot.getRenderer(0).setSeriesStroke(0, new BasicStroke(2f));
+        topPlot.getRenderer(0).setSeriesStroke(1, new BasicStroke(2f));
+        topPlot.getRenderer(1).setSeriesStroke(0, new BasicStroke(2f));
+
+        /*
+         * renderer.setSeriesStroke(1, new BasicStroke(2f));
+         * XYItemRenderer renderer2=topPlot.getRenderer(1);
+         * renderer2.setSeriesStroke(0, new BasicStroke(2f));
+         */
+
         topPlot.setRangeAxis(0, new NumberAxis("Torque [Nm]"));
         topPlot.setRangeAxis(1, new NumberAxis("Velocidad [RPM]"));
 
         topPlot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
         topPlot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
         topPlot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
+
         topPlot.mapDatasetToRangeAxis(0, 0);
         topPlot.mapDatasetToRangeAxis(1, 1);
         // customize the plot with renderers and axis
@@ -397,8 +432,14 @@ public class Views implements ViewListener {
         bottomPlot.setDataset(1, mainDataset.get(commands.CURRENT.seriesName));
         bottomPlot.setDataset(2, mainDataset.get(commands.POWER.seriesName));
         bottomPlot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.getRenderer(0).setSeriesStroke(0, new BasicStroke(2f));
+
         bottomPlot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.getRenderer(1).setSeriesStroke(0, new BasicStroke(2f));
+
         bottomPlot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.getRenderer(2).setSeriesStroke(0, new BasicStroke(2f));
+
         bottomPlot.setRangeAxis(0, new NumberAxis("Tensión [Vrms]"));
         bottomPlot.setRangeAxis(1, new NumberAxis("Corriente [Arms]"));
         bottomPlot.setRangeAxis(2, new NumberAxis("Potencia [KW]"));
@@ -411,36 +452,36 @@ public class Views implements ViewListener {
         bottomPlot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
 
         // generate the chart
-        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(new NumberAxis("Domain"));
+        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(new NumberAxis("Tiempo [ms]"));
         plot.setDomainPannable(true);
         plot.setRangePannable(true);
         plot.add(topPlot);
         plot.add(bottomPlot);
-        // r1.setSeriesPaint(0, Color.BLACK);
-        // plot.setRenderer(1, splinerenderer);
-
-        // Map the data to the appropriate axis
-        JFreeChart chart = new JFreeChart("Variables en tiempo real", null, plot, true);
+        JFreeChart chart = new JFreeChart("Ensayo en tiempo real", null, plot, true);
         frame.setChart(chart);
-
-        // JPanel jpanel = new ChartPanel(chart);
-        // chart.setBackgroundPaint(Color.WHITE);
-
         return chart;
     }
 
+    /**
+     * Handles period extension for CSV waveform input
+     */
     private class PeriodExtensionHandler implements ChangeListener {
         @Override
         public void stateChanged(ChangeEvent e) {
             if (getController().getTorqueTimeValues().length() != 0) {
 
                 getController().extendTorqueTimeValues((int) frame.getInputPanel().testPeriodsSpinner.getValue());
-                
+
                 plotTorqueTime();
             }
         }
     }
 
+    /**
+     * set user input visibility for torque vs time test commands
+     * 
+     * @param visible
+     */
     public void torqueVsTimeVisibility(boolean visible) {
         frame.getInputPanel().stopTime.setVisible(!visible);
         frame.getInputPanel().filename.setVisible(visible);
@@ -454,32 +495,68 @@ public class Views implements ViewListener {
         frame.getContentPane().repaint();
     }
 
+    /**
+     * set user input visibility for mixed test commands
+     * 
+     * @param visible
+     */
+    public void mixedTestVisibility(boolean visible) {
+        frame.getInputPanel().stopTime.setVisible(!visible);
+        frame.getInputPanel().filename.setVisible(visible);
+        frame.getInputPanel().openFileButton.setVisible(visible);
+        frame.getInputPanel().torqueEquation.setVisible(visible);
+        frame.getInputPanel().torqueEquationParameters.setVisible(visible);
+        frame.getInputPanel().testPeriodLabel.setVisible(visible);
+        frame.getInputPanel().testPeriodsSpinner.setVisible(visible);
+        frame.getInputPanel().itemsLoadedLabel.setVisible(visible);
+        frame.getContentPane().revalidate();
+        frame.getContentPane().repaint();
+    }
+
+    /**
+     * return user input target IP
+     * 
+     * @return String
+     */
     public String getTargetIP() {
         System.err.println(frame.getInputPanel().targetIP.getText());
         return frame.getInputPanel().targetIP.getText();
     }
 
-    public void dismissAlert() {
-
-        frame.userMessagePanel.setBackground(Color.WHITE);
-        frame.getInputPanel().userMessageLabel.setText("");
-    }
-
+    /**
+     * Triggers window popup
+     * 
+     * @param message
+     */
     public void alert(String message) {
-        frame.userMessagePanel.setBackground(Color.RED);
-        frame.getInputPanel().userMessageLabel.setText(message);
+        frame.getInputPanel().userMessageAlert.showMessageDialog(null, message, "Alerta",
+                JOptionPane.ERROR_MESSAGE);// setText(message);
+
     }
 
+    /**
+     * Returns torque equation parameters
+     * 
+     * @return Map<String, TorqueEquationParameter>
+     */
     public Map<String, TorqueEquationParameter> getTorqueEquationParameters() {
         return frame.getInputPanel().torqueEquationParameters.getParameterValues();
     }
 
+    /**
+     * Gets test type
+     * 
+     * @return testTypes
+     */
     public testTypes getTestType() {
 
         testTypes selectedTest = (testTypes) frame.getInputPanel().torqueTestModeComboBox.getSelectedItem();
         return selectedTest;
     }
 
+    /**
+     * Creates torque vs time plot
+     */
     private void plotTorqueTime() {
 
         TorqueTimeValues torqueTime = new TorqueTimeValues(getController().getTorqueTimeValues());
@@ -493,6 +570,11 @@ public class Views implements ViewListener {
 
     }
 
+    /**
+     * Stores chart data to CSV file
+     * 
+     * @param filename
+     */
     private void storeDataSet(String filename) {
 
         java.util.List<String> csv = new ArrayList<>();
@@ -503,13 +585,8 @@ public class Views implements ViewListener {
                 maxItemCount = itemCount;
             }
         }
-        // for (String series : mainDataset.keySet()) {
-        // int seriesCount = this.mainDataset.get(series).getSeriesCount();
-        // int itemCount = this.mainDataset.get(series).getItemCount(0);
         String header = "";
         String aux = "";
-        // System.out.println(seriesCount);
-        // System.out.println(itemCount);
         for (int j = 0; j < maxItemCount; j++) {
             for (String key : this.mainDataset.keySet()) {
                 List<XYSeries> seriesList = this.mainDataset.get(key).getSeries();
@@ -521,60 +598,23 @@ public class Views implements ViewListener {
                         Number x = currentSeries.getX(j);
                         Number y = currentSeries.getY(j);
                         aux += String.format("%s,", x);
-                        // }
-
                         aux += String.format("%s,", y);
                     } catch (IndexOutOfBoundsException e) {
                         aux += String.format("%s,", "");
                         aux += String.format("%s,", "");
                     }
-                    // if (j == 0) {
                     header += "Tiempo [ms],";
                     header += String.format("%s,", currentSeries.getKey());
-                    // }
-                    // if (i == 0) {
 
                 }
-                
-                
+
             }
             if (j == 0) {
 
                 csv.add(header);
             }
             csv.add(aux);
-                aux = "";
-            // }
-            /*
-             * for (int i = 0; i < seriesCount; i++) {
-             * Comparable key = this.mainDataset.get(series).getSeriesKey(i);
-             * 
-             * try {
-             * Number x = this.mainDataset.get(series).getX(i, j);
-             * Number y = this.mainDataset.get(series).getY(i, j);
-             * aux += String.format("%s,", x);
-             * // }
-             * 
-             * aux += String.format("%s,", y);
-             * } catch (IndexOutOfBoundsException e) {
-             * aux += String.format("%s,", "");
-             * aux += String.format("%s,", "");
-             * }
-             * // if (j == 0) {
-             * header += "Tiempo [ms],";
-             * header += String.format("%s,", series);
-             * // }
-             * // if (i == 0) {
-             * 
-             * }
-             * if (j == 0) {
-             * 
-             * csv.add(header);
-             * }
-             * csv.add(aux);
-             * aux = "";
-             * }
-             */
+            aux = "";
 
         }
         try (
@@ -591,6 +631,9 @@ public class Views implements ViewListener {
         System.out.println("exporte como csv");
     }
 
+    /**
+     * Implements behaviour for button input
+     */
     private class ButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -630,14 +673,23 @@ public class Views implements ViewListener {
 
                         getController().selectTorqueVsTime();
                         blockInput(testStates.TEST_RUNNING);
-                        //getController().setTorqueVsTime();
-                        /*
-                         * TorqueTimeValues torqueTimeValue = this.getTorqueTimeValues();
-                         * // getController().selectTorqueVsTime();
-                         * bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(model,
-                         * torqueTimeValue.getTimestamp(),
-                         * torqueTimeValue.getTimestamp()), 0, 500, TimeUnit.MILLISECONDS);
-                         */
+
+                    } else if (test == testTypes.MIXED_TEST) {
+
+                        try {
+                            getController().selectMixedTest();
+                            getController().setTorqueVsSpeedParameters(
+                                    frame.getInputPanel().torqueEquationParameters.getParameterValues());
+
+                            blockInput(testStates.TEST_RUNNING);
+                        } catch (Exception e) {
+
+                            System.err.println("Tire error");
+
+                            System.err.println(e.getMessage());
+
+                            blockInput(testStates.TEST_RUNNING);
+                        }
 
                     }
                     blockInput(testStates.TEST_RUNNING);
@@ -677,7 +729,7 @@ public class Views implements ViewListener {
                 try {
 
                     getController().connect(url);
-                    //Thread.sleep(1000);
+                    // Thread.sleep(1000);
                     getController().PLCStart();
                     blockInput(testStates.PLC_CONNECTED);
                 } catch (Exception e) {
@@ -694,7 +746,6 @@ public class Views implements ViewListener {
                 try {
 
                     getController().powerOff();
-                    // TODO: Necesita un retardo?
                     getController().PLCStop();
                     blockInput(testStates.TEST_END);
                 } catch (Exception e) {
@@ -753,6 +804,7 @@ public class Views implements ViewListener {
                 }
             } else if (START_BUTTON_LABEL.equals(cmd)) {
                 System.err.println("estoy en iniciar");
+                frame.inputPanel.measurementsPanel.setVisible(true);
                 getController().startMeasurements();
                 plotUpdater.execute();
                 frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
@@ -778,7 +830,7 @@ public class Views implements ViewListener {
                 frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
                 System.err.println("estoy en pausa");
                 try {
-                    // getController().stop();
+                    getController().stop();
                 } catch (Exception e) {
                     System.err.println("Tire error");
 
@@ -793,22 +845,29 @@ public class Views implements ViewListener {
 
     }
 
+    /**
+     * Implements behaviour for
+     * different test types
+     * 
+     */
     private class TestTypeHandler implements ItemListener {
         @Override
         public void itemStateChanged(ItemEvent event) {
             if (event.getSource() == frame.getInputPanel().torqueTestModeComboBox) {
 
                 if (frame.getInputPanel().torqueTestModeComboBox.getSelectedItem() == testTypes.TORQUE_VS_SPEED) {
-                    // Tiempo de inicio-fin
-                    // Componentes de ecuación cupla
+
                     torqueVsTimeVisibility(false);
 
                 } else if (frame.getInputPanel().torqueTestModeComboBox
                         .getSelectedItem() == testTypes.TORQUE_VS_TIME) {
 
                     torqueVsTimeVisibility(true);
+                } else if (frame.getInputPanel().torqueTestModeComboBox
+                        .getSelectedItem() == testTypes.MIXED_TEST) {
+
+                    mixedTestVisibility(true);
                 }
-                // l1.setText(c1.getSelectedItem() + " selected");
             }
         }
 

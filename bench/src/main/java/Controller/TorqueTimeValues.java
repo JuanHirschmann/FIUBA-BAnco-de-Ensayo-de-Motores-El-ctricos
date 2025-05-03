@@ -73,7 +73,7 @@ public class TorqueTimeValues {
             aux=data.get("timestamp").get(i-initialLength);
             if (Float.valueOf(aux)==0)
             {
-                aux="1";
+                aux="30";
             }
             time_delta=Float.valueOf(aux)+Float.valueOf(data.get("timestamp").get(initialLength-1));
             data.get("timestamp").add(String.valueOf(time_delta));
@@ -130,6 +130,19 @@ public class TorqueTimeValues {
         } catch (IOException e) {
             throw new IllegalStateException("Cannot write dataset", e);
         }
+    }
+    public void zeropad(int padLength)
+    {
+        System.out.print("Pad: ");
+        System.out.println(padLength);
+        for(int i=0;i<padLength;i++)
+        {
+            
+            data.get("timestamp").add("0");
+            data.get("value").add("0");
+            length++;
+        }
+
     }
     /* 
      * gets the timestamps for the waveform

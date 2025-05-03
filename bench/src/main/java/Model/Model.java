@@ -1,8 +1,11 @@
 package Model;
 
 import java.net.ConnectException;
+import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.xml.namespace.QName;
 import static Model.Constants.VAR_PATH;
@@ -12,11 +15,12 @@ import static Model.Constants.TORQUE_TIME_BUFFER_SIZE;
 import static Model.Constants.TORQUE_TIME_VALUES;
 //import static Model.Constants.RUN;
 import static Model.Constants.SOFTWARE_KILLSWITCH;
-import static Model.Constants.SOFTWARE_START;
-import static Model.Constants.SOFTWARE_STOP;
+import static Model.Constants.SOFTWARE_START_BUTTON;
+import static Model.Constants.SOFTWARE_STOP_BUTTON;
 import static Model.Constants.TEST_RUNTIME;
 import static Model.Constants.TIMESTAMP;
-import static Model.Constants.TORQUE_FROM_TIMESTAMP_SELECTED;
+import static Model.Constants.TORQUE_VS_TIMESTAMP_SELECTED;
+import static Model.Constants.TORQUE_VS_SPEED_SELECTED;
 import static Model.Constants.CLEAR_TO_RECIEVE;
 import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
 import static Model.Constants.ENABLE_SIMULATOR_AXIS;
@@ -24,10 +28,14 @@ import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 //import static Model.Constants.NEW_SPEED_SETPOINT_LOAD_AXIS;
 import static Model.Constants.OPERATION_MODE;
 import static Model.Constants.SAVE_TO_BUFFER;
+import static Model.Constants.AXIS_ENABLED_SIGNAL;
+import static Model.Constants.TEST_STATUS;
 
 import org.opcfoundation.webservices.XMLDA._1_0.ItemValue;
 
+import Model.Constants.serverSideTestStatus;
 import Swing.TorqueEquationParameter;
+import Views.Constants.testStates;
 
 public class Model {
 
@@ -37,8 +45,34 @@ public class Model {
     /**
      * @param args
      */
-    public static void main(String[] args) {
-        new Model();
+    
+
+    public serverSideTestStatus getTestStatus() throws ConnectException {
+        String serverSideTestState=this.readVar(VAR_PATH, TEST_STATUS);
+        serverSideTestStatus testState=serverSideTestStatus.NOT_STARTED;
+        if (serverSideTestState.equalsIgnoreCase("0")) {
+            testState=serverSideTestStatus.RUNNING;
+        } else if (serverSideTestState.equalsIgnoreCase("1")) {
+            testState=serverSideTestStatus.STOPPED;
+        } else if (serverSideTestState.equalsIgnoreCase("2")) {
+            testState=serverSideTestStatus.ENDED;
+        } else if (serverSideTestState.equalsIgnoreCase("3")) {
+            testState=serverSideTestStatus.NOT_STARTED;
+        } else if (serverSideTestState.equalsIgnoreCase("4")) {
+            testState=serverSideTestStatus.EMERGENCY_STOP;
+        } else {
+            testState=serverSideTestStatus.READY_TO_START;
+        }
+        System.out.println(serverSideTestState);
+        return testState;
+    }
+
+    public boolean ALM_is_active() throws ConnectException {
+        boolean output = false;
+        if (this.readVar(VAR_PATH, AXIS_ENABLED_SIGNAL).equalsIgnoreCase("TRUE")) {
+            output = true;
+        }
+        return output;
     }
 
     /**
@@ -147,6 +181,7 @@ public class Model {
      * @throws ConnectException
      */
     public void writeVar(String varValue, String varPath, String varName) throws ConnectException {
+
         try {
 
             org.opcfoundation.webservices.XMLDA._1_0.Write parameters = new org.opcfoundation.webservices.XMLDA._1_0.Write();
@@ -175,6 +210,54 @@ public class Model {
             }
         } catch (Exception exception) {
             System.out.println("Toy aca2");
+            throw new ConnectException("No se encontró la variable " + varName + " en el path: " + varPath);
+            // jLabelStatus.setText("Error reading item \"" + itemName + "\"");
+        }
+    }
+
+    public void writeArray(List<String> varValue, String varPath, String varName, int maxIndex, int offset)throws ConnectException {
+        System.err.println("Entre a Write array");
+        try {
+
+            org.opcfoundation.webservices.XMLDA._1_0.Write parameters = new org.opcfoundation.webservices.XMLDA._1_0.Write();
+            org.opcfoundation.webservices.XMLDA._1_0.RequestOptions options = new org.opcfoundation.webservices.XMLDA._1_0.RequestOptions();
+            org.opcfoundation.webservices.XMLDA._1_0.WriteRequestItemList itemList = new org.opcfoundation.webservices.XMLDA._1_0.WriteRequestItemList();
+            options.setLocaleID("en");
+            parameters.setOptions(options);
+            org.opcfoundation.webservices.XMLDA._1_0.ItemValue[] items = new ItemValue[maxIndex];
+            
+            
+            
+            System.out.print("offset: ");
+            System.err.println(offset);
+            for(int i=0;i<maxIndex;i++)
+            {   
+                org.opcfoundation.webservices.XMLDA._1_0.ItemValue item = new ItemValue();
+                item.setItemPath(varPath);
+                int bufferIndex=i+offset;
+                item.setItemName(varName+ "[" + bufferIndex + "]");
+                item.setValueTypeQualifier(new javax.xml.namespace.QName("http://www.w3.org/2001/XMLSchema", "string")); // "int"));
+                String str = new String("" + varValue.get(i));
+                item.setItemPath(varPath);
+                item.setValue(str);
+                items[i] = item;
+
+            }
+            System.err.println(items);
+            // item.setClientItemHandle("j");
+            itemList.setItems(items);
+            parameters.setItemList(itemList);
+
+            org.opcfoundation.webservices.XMLDA._1_0.WriteResponse writeResponse = null;
+            writeResponse = mySimotionWebService.write(parameters);
+            if (writeResponse == null) {
+                System.err.println("readResponse == null");
+                throw new ConnectException("No fue posible la escritura de la variable");
+                // jLabelStatus.setText("readResponse == null");
+            }
+        } catch (Exception exception) {
+            System.out.println("Toy aca2");
+            System.out.println(exception.getMessage());
             throw new ConnectException("No se encontró la variable " + varName + " en el path: " + varPath);
             // jLabelStatus.setText("Error reading item \"" + itemName + "\"");
         }
@@ -276,7 +359,9 @@ public class Model {
      */
     public void stop() throws ConnectException {
 
-        writeVar("FALSE", VAR_PATH, SOFTWARE_START);
+        writeVar("TRUE", VAR_PATH, SOFTWARE_STOP_BUTTON);
+
+        writeVar("FALSE", VAR_PATH, SOFTWARE_START_BUTTON);
     }
 
     /**
@@ -288,8 +373,8 @@ public class Model {
     // stop en PLC
     public void start() throws ConnectException {
         // TODO Meter un retardo de 10ms
-
-        writeVar("TRUE", VAR_PATH, SOFTWARE_START);
+        writeVar("FALSE", VAR_PATH, SOFTWARE_STOP_BUTTON);
+        writeVar("TRUE", VAR_PATH, SOFTWARE_START_BUTTON);
     }
 
     /**
@@ -301,7 +386,6 @@ public class Model {
         boolean output = false;
         try {
             String CTR = readVar(VAR_PATH, CLEAR_TO_RECIEVE);
-            System.err.println(CTR);
             if (CTR == "true") {
                 output = true;
             }
@@ -326,19 +410,21 @@ public class Model {
     public void writeBuffer(List<String> timestamp, List<String> torque) throws Exception {
         System.err.println("write buffer");
         System.err.println(timestamp.size());
-        //TODO: si esta bien implementado, el control mide tiempo decreciente y corta
+        // TODO: si esta bien implementado, el control mide tiempo decreciente y corta
         for (int i = 0; i < timestamp.size(); i++) {
             // TODO: Ver bien como se llaman los vectores
             System.err.println(i);
             writeVar(torque.get(i), VAR_PATH, TORQUE_TIME_VALUES + "[" + i + "]");
             writeVar(timestamp.get(i), VAR_PATH, TIMESTAMP + "[" + i + "]");
-            /* if (timestamp.size() <= i) {
-                writeVar("0", VAR_PATH, TORQUE_TIME_VALUES + "[" + i + "]");
-                writeVar("0", VAR_PATH, TIMESTAMP + "[" + i + "]");
-
-            } else {
-
-            } */
+            /*
+             * if (timestamp.size() <= i) {
+             * writeVar("0", VAR_PATH, TORQUE_TIME_VALUES + "[" + i + "]");
+             * writeVar("0", VAR_PATH, TIMESTAMP + "[" + i + "]");
+             * 
+             * } else {
+             * 
+             * }
+             */
         }
         this.saveToBuffer();
         System.err.println("Escribi buffer");
@@ -350,7 +436,8 @@ public class Model {
     //
     public void selectTorqueVsSpeed() throws ConnectException {
 
-        writeVar("FALSE", VAR_PATH, TORQUE_FROM_TIMESTAMP_SELECTED);
+        writeVar("FALSE", VAR_PATH, TORQUE_VS_TIMESTAMP_SELECTED);
+        writeVar("TRUE", VAR_PATH, TORQUE_VS_SPEED_SELECTED);
     }
 
     /**
@@ -378,6 +465,7 @@ public class Model {
      * @throws ConnectException
      */
     public void setTestEndTime(String endtime_ms) throws ConnectException {
+
         writeVar(endtime_ms, VAR_PATH, TEST_RUNTIME);
     }
 
@@ -388,9 +476,19 @@ public class Model {
      */
     public void selectTorqueVsTime() throws ConnectException {
 
-        writeVar("TRUE", VAR_PATH, TORQUE_FROM_TIMESTAMP_SELECTED);
+        writeVar("TRUE", VAR_PATH, TORQUE_VS_TIMESTAMP_SELECTED);
+        writeVar("FALSE", VAR_PATH, TORQUE_VS_SPEED_SELECTED);
     }
+    /**
+     * Writes TRUE to TORQUE_FROM_TIMESTAMP_SELECTED variable on PLC.
+     * 
+     * @throws ConnectException
+     */
+    public void selectMixedTest() throws ConnectException {
 
+        writeVar("TRUE", VAR_PATH, TORQUE_VS_TIMESTAMP_SELECTED);
+        writeVar("TRUE", VAR_PATH, TORQUE_VS_SPEED_SELECTED);
+    }
     /**
      * Disables simulator axis and shutdowns line module
      * 
@@ -416,5 +514,26 @@ public class Model {
         Thread.sleep(50);
         this.writeVar("FALSE", VAR_PATH, SAVE_TO_BUFFER);
 
+    }
+    public static void main(String[] args)
+    {
+        
+        Model model=new Model();
+       
+        try
+        {
+            model.connect("http://169.254.11.22/soap/opcxml");
+            List<String> values=new ArrayList<String>();
+            for(int i=0;i<10;i++)
+            {
+                values.add(String.valueOf(i));
+            }
+            //model.writeArray(values, VAR_PATH, TIMESTAMP, 10);
+
+        }
+        catch(Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
     }
 }

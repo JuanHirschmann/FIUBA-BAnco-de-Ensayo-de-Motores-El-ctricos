@@ -14,23 +14,29 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
+
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.EmptyBorder;
 
 import Model.Constants.commands;
 import Model.Constants.testTypes;
+import Views.Constants.testStates;
 
 public class InputPanel extends JPanel {
-    public JPanel statusPanel=new JPanel();
+    public StatusPanel statusPanel=new StatusPanel();
     public ControlPanel controlPanel=new ControlPanel();
     public VariablesPanel variablesPanel=new VariablesPanel();
-    public UserMessagePanel userMsgPanel=new UserMessagePanel();
+    public MeasurementsPanel measurementsPanel=new MeasurementsPanel();
     //control panel
     
     public JButton powerOnButton = new JButton(POWER_ON_BUTTON_LABEL);// Activa el modulo activo de linea y el eje
@@ -42,7 +48,7 @@ public class InputPanel extends JPanel {
     
     //Variables panel
     public LabeledInput stopTime = new LabeledInput("Tiempo de fin [s]:");
-    public JTextField filename = new JTextField(40);
+    public JTextField filename = new JTextField(20);
     public JButton setParametersButton = new JButton(SET_TEST_PARAMETERS_BUTTON_LABEL);
     public JButton saveCSVButton = new JButton(WRITE_CSV);
     public JButton openFileButton = new JButton(BROWSE_FILE_BUTTON_LABEL);
@@ -54,19 +60,17 @@ public class InputPanel extends JPanel {
     public SpinnerModel numericModel = new SpinnerNumberModel(1, 1, 99, 1);
     public JSpinner testPeriodsSpinner = new JSpinner(numericModel);
     public JLabel itemsLoadedLabel = new JLabel("");
-    public StatusLight powerOnIndicator=new StatusLight("ALM");
-    public StatusLight connectionIndicator=new StatusLight("CONN");
-    public StatusLight semaphoreIndicator=new StatusLight("STATUS");
-    public StatusLight loadedTestIndicator=new StatusLight("TEST");
+    public StatusLight powerOnIndicator=new StatusLight("POTENCIA");
+    public StatusLight connectionIndicator=new StatusLight("CONEXIÓN");
+    public StatusLight semaphoreIndicator=new StatusLight("NO INICIADO");
+    public StatusLight loadedTestIndicator=new StatusLight("ENSAYO LISTO");
     
     public onScreenMeasurements displayedMeasurements = new onScreenMeasurements();
 
-    public JLabel userMessageLabel=new JLabel();
+    public JOptionPane userMessageAlert=new JOptionPane();
     public  InputPanel()
     
     {
-        
-        statusPanel.setLayout( new GridLayout(0,1));
         //controlPanel.setBackground(Color.GREEN);
         targetIP.setText(DEFAULT_SERVER_ADDRESS);
         controlPanel.add(buttonConnect);
@@ -76,10 +80,10 @@ public class InputPanel extends JPanel {
         controlPanel.add(shutdownButton);
         targetIP.set(controlPanel);
         
-        //variablesPanel
-        //variablesPanel.setBackground(Color.YELLOW);
+        
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_TIME);
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_SPEED);
+        this.torqueTestModeComboBox.addItem(testTypes.MIXED_TEST);
         variablesPanel.add(torqueTestModeComboBox);
         variablesPanel.add(openFileButton);
         variablesPanel.add(filename);
@@ -92,21 +96,19 @@ public class InputPanel extends JPanel {
         variablesPanel.add(setParametersButton);
         variablesPanel.add(saveCSVButton);
         
-        displayedMeasurements.setMeasurements(variablesPanel);
         //Status panel
         statusPanel.add(powerOnIndicator);
         statusPanel.add(connectionIndicator);
         statusPanel.add(semaphoreIndicator);
         statusPanel.add(loadedTestIndicator);
-        //setBackground(Color.black);
         this.displayedMeasurements.addMeasuredVariable(commands.TORQUE);
         this.displayedMeasurements.addMeasuredVariable(commands.POWER);
         this.displayedMeasurements.addMeasuredVariable(commands.VOLTAGE);
         this.displayedMeasurements.addMeasuredVariable(commands.CURRENT);
         this.displayedMeasurements.addMeasuredVariable(commands.SPEED);
         this.displayedMeasurements.addMeasuredVariable(commands.TORQUE_COMMAND);
-        //userMsgPanel.setBackground(Color.WHITE);
-        displayedMeasurements.setMeasurements(userMsgPanel);
+        //measurementsPanel.setBackground(Color.WHITE);
+        displayedMeasurements.setMeasurements(measurementsPanel);
         
 
         setLayout(new GridBagLayout());//(new GridLayout(2,0));
@@ -115,18 +117,23 @@ public class InputPanel extends JPanel {
         gbc.gridy=0;
         gbc.gridheight=3;
         gbc.gridwidth=1;
-        gbc.fill=GridBagConstraints.VERTICAL;
+        gbc.weightx=0.5;
+        gbc.fill=GridBagConstraints.BOTH;
+        //gbc.insets = new Insets(3,10,3,10);
+        
         add(statusPanel,gbc);
         gbc.gridx=0;
         gbc.gridy=0;
         gbc.gridheight=1;
         gbc.gridwidth=1;
-        gbc.fill=GridBagConstraints.HORIZONTAL;
+        gbc.weightx=0.5;
+        gbc.fill=GridBagConstraints.BOTH;
         add(controlPanel,gbc);
         gbc.gridx=0;
         gbc.gridy=1;
         gbc.gridheight=2;
         gbc.gridwidth=1;
+        gbc.weightx=0.5;
         gbc.fill=GridBagConstraints.HORIZONTAL;
         add(variablesPanel,gbc);
         
@@ -134,8 +141,9 @@ public class InputPanel extends JPanel {
         gbc.gridy=3;
         gbc.gridheight=1;
         gbc.gridwidth=1;
-        gbc.fill=GridBagConstraints.HORIZONTAL;
-        add(userMsgPanel,gbc);
+        gbc.weightx=0.5;
+        gbc.fill=GridBagConstraints.VERTICAL;
+        add(measurementsPanel,gbc);
         
     }
     private class TorqueEquation {

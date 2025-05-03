@@ -10,7 +10,7 @@ public class ControlPanel extends JPanel {
     public ControlPanel() {
         setLayout(new FlowLayout());
 
-        this.setPreferredSize(new Dimension(1100, 45));
+        //this.setPreferredSize(new Dimension(1100, 45));
 
     }
 }
