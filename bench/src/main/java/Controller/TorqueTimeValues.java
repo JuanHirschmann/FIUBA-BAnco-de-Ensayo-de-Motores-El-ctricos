@@ -35,7 +35,7 @@ public class TorqueTimeValues {
      * Returns the maximum torque value found on the torque time waveform
      * @return float
      */
-    public float getMaxTorque()
+    public float getMax()
     {
         float max=0;
         for(int i =0;i<data.get("value").size();i++)
@@ -47,7 +47,44 @@ public class TorqueTimeValues {
         }
         return max;
     }
-    
+    /** 
+     * Returns the minimum time delta in ms found on torque-time waveform
+     * @return float
+     */
+    public float getMinTimeDelta()
+    {
+        float min=0;
+        float delta=0;
+        for(int i =0;i<this.onePeriodLength-1;i++)
+        {
+            delta=Float.valueOf(data.get("timestamp").get(i))-Float.valueOf(data.get("timestamp").get(i));
+            if(Float.valueOf(data.get("timestamp").get(i))<min)
+            {
+                min=delta;
+            }
+        }
+        return delta;
+    }
+    public void torqueCommandCheck() throws IllegalArgumentException
+    {
+        if (this.length() == 0) {
+            throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
+        } else if (this.getMax() > 26) {
+            throw new IllegalArgumentException("El archivo elegido supera el torque máximo del sistema (26Nm).");
+        }else if (this.getMinTimeDelta() < 100) {
+            throw new IllegalArgumentException("El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms");
+        }
+    }
+    public void speedCommandCheck() throws IllegalArgumentException
+    {
+        if (this.length() == 0) {
+            throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
+        } else if (this.getMax() > 3000) {
+            throw new IllegalArgumentException("Velocidad máxima del eje simulador excedida (3000RPM)");
+        }else if (this.getMinTimeDelta() < 100) {
+            throw new IllegalArgumentException("El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms (speed)");
+        }
+    }
     /** 
      * returns torque commands value's length
      * @return int
@@ -128,6 +165,7 @@ public class TorqueTimeValues {
                 onePeriodLength++;
             }
         } catch (IOException e) {
+            System.out.println(e);
             throw new IllegalStateException("Cannot write dataset", e);
         }
     }

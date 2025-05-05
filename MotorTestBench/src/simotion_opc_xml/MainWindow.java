@@ -278,6 +278,9 @@ public class MainWindow extends JFrame {
             //jLabelVar_withValue.setText(textVar + jTextFieldVar.getText());//var1);
             String itemPath = jTextFieldItemPath.getText();
             String itemName = jTextFieldItemName.getText();
+            System.out.print(itemPath);
+            System.out.print(itemName);
+
             if ((itemPath != null) && (itemPath.length() > 0) &&
                 (itemName != null) && (itemName.length() > 0)){
             	if (jTextFieldVar.getText().length() > 0) {

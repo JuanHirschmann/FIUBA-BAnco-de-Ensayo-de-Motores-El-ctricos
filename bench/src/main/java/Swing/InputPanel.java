@@ -5,6 +5,8 @@ import static Views.Constants.CONNECT_BUTTON_LABEL;
 import static Views.Constants.DEFAULT_SERVER_ADDRESS;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
+import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
+import static Views.Constants.SELF_SUSTAINED_TEST_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
@@ -18,6 +20,7 @@ import java.awt.Insets;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -47,14 +50,16 @@ public class InputPanel extends JPanel {
     public LabeledInput targetIP= new LabeledInput("IP objetivo: ");
     
     //Variables panel
-    public LabeledInput stopTime = new LabeledInput("Tiempo de fin [s]:");
-    public JTextField filename = new JTextField(20);
+    public LabeledInput stopTime = new LabeledInput("Tiempo de fin [ms]:");
+    public JTextField filename = new JTextField(10);
     public JButton setParametersButton = new JButton(SET_TEST_PARAMETERS_BUTTON_LABEL);
     public JButton saveCSVButton = new JButton(WRITE_CSV);
     public JButton openFileButton = new JButton(BROWSE_FILE_BUTTON_LABEL);
     public JComboBox<testTypes> torqueTestModeComboBox = new JComboBox<testTypes>();
     public TorqueEquation torqueEquationText = new TorqueEquation();
-    public JLabel torqueEquation = new JLabel(torqueEquationText.toString());
+    public ImageIcon equationIcon= new ImageIcon("C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\Codigo\\Pruebas OPC V\\bench\\src\\main\\resources\\equation.png");
+    
+    public JLabel torqueEquation = new JLabel(equationIcon);
     public TorqueEquationParameters torqueEquationParameters = new TorqueEquationParameters();
     public JLabel testPeriodLabel = new JLabel("Cantidad de periodos a ensayar");
     public SpinnerModel numericModel = new SpinnerNumberModel(1, 1, 99, 1);
@@ -64,7 +69,10 @@ public class InputPanel extends JPanel {
     public StatusLight connectionIndicator=new StatusLight("CONEXIÓN");
     public StatusLight semaphoreIndicator=new StatusLight("NO INICIADO");
     public StatusLight loadedTestIndicator=new StatusLight("ENSAYO LISTO");
-    
+    public JCheckBox selfSustainedTestSelection=new JCheckBox(SELF_SUSTAINED_TEST_LABEL);
+    public JButton openDUTFileButton = new JButton(SELF_SUSTAINED_TEST_IMPORT_LABEL);
+    public JTextField DUTFilename = new JTextField(15);
+
     public onScreenMeasurements displayedMeasurements = new onScreenMeasurements();
 
     public JOptionPane userMessageAlert=new JOptionPane();
@@ -93,8 +101,15 @@ public class InputPanel extends JPanel {
         variablesPanel.add(testPeriodLabel);
         variablesPanel.add(testPeriodsSpinner);
         stopTime.set(variablesPanel);
+        variablesPanel.add(selfSustainedTestSelection);
+        variablesPanel.add(openDUTFileButton);
+        variablesPanel.add(DUTFilename);
+        openDUTFileButton.setVisible(false);
         variablesPanel.add(setParametersButton);
         variablesPanel.add(saveCSVButton);
+        DUTFilename.setVisible(false);
+        
+        
         
         //Status panel
         statusPanel.add(powerOnIndicator);
@@ -115,8 +130,8 @@ public class InputPanel extends JPanel {
         GridBagConstraints gbc= new GridBagConstraints();
         gbc.gridx=1;
         gbc.gridy=0;
-        gbc.gridheight=3;
-        gbc.gridwidth=1;
+        gbc.gridheight=1;
+        gbc.gridwidth=2;
         gbc.weightx=0.5;
         gbc.fill=GridBagConstraints.BOTH;
         //gbc.insets = new Insets(3,10,3,10);
@@ -132,9 +147,9 @@ public class InputPanel extends JPanel {
         gbc.gridx=0;
         gbc.gridy=1;
         gbc.gridheight=2;
-        gbc.gridwidth=1;
+        gbc.gridwidth=3;
         gbc.weightx=0.5;
-        gbc.fill=GridBagConstraints.HORIZONTAL;
+        gbc.fill=GridBagConstraints.BOTH;
         add(variablesPanel,gbc);
         
         gbc.gridx=0;

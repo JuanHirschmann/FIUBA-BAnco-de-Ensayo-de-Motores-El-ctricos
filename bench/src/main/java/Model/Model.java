@@ -22,6 +22,8 @@ import static Model.Constants.TIMESTAMP;
 import static Model.Constants.TORQUE_VS_TIMESTAMP_SELECTED;
 import static Model.Constants.TORQUE_VS_SPEED_SELECTED;
 import static Model.Constants.CLEAR_TO_RECIEVE;
+import static Model.Constants.DUT_CLEAR_TO_RECEIVE;
+import static Model.Constants.DUT_CLEAR_TO_RECIEVE;
 import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
 import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 //import static Model.Constants.LOAD_AXIS_SPEED_SETPOINT;
@@ -29,6 +31,7 @@ import static Model.Constants.ENABLE_SIMULATOR_AXIS;
 import static Model.Constants.OPERATION_MODE;
 import static Model.Constants.SAVE_TO_BUFFER;
 import static Model.Constants.AXIS_ENABLED_SIGNAL;
+import static Model.Constants.CLEAR_TO_RECEIVE;
 import static Model.Constants.TEST_STATUS;
 
 import org.opcfoundation.webservices.XMLDA._1_0.ItemValue;
@@ -103,9 +106,10 @@ public class Model {
             isConnected = true; // Force readVar
             this.readVar(VAR_PATH, OPERATION_MODE);
         } catch (Exception e) {
+            System.out.println(URL);
+            System.out.println(e);
             isConnected = false;
         }
-
     }
 
     /**
@@ -385,7 +389,24 @@ public class Model {
     public boolean bufferCTR() {
         boolean output = false;
         try {
-            String CTR = readVar(VAR_PATH, CLEAR_TO_RECIEVE);
+            String CTR = readVar(VAR_PATH, CLEAR_TO_RECEIVE);
+            if (CTR == "true") {
+                output = true;
+            }
+        } catch (ConnectException e) {
+            System.out.println(e.getMessage());
+        }
+        return output;
+    }
+    /**
+     * Returns communication buffer Clear to Receive status from PLC.
+     * 
+     * @return boolean if TRUE, PLC communication buffer is clear to receive.
+     */
+    public boolean DUTBufferCTR() {
+        boolean output = false;
+        try {
+            String CTR = readVar(VAR_PATH, DUT_CLEAR_TO_RECEIVE);
             if (CTR == "true") {
                 output = true;
             }

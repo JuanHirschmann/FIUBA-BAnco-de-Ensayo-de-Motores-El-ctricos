@@ -9,10 +9,12 @@ import static Views.Constants.EMERGENCY_RELEASE_BUTTON_LABEL;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
 import static Views.Constants.PAUSE_BUTTON_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
+import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
 import static Views.Constants.WRITE_CSV;
+import static Views.Constants.SELF_SUSTAINED_TEST_LABEL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
@@ -62,17 +64,20 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYSplineRenderer;
+import org.jfree.data.UnknownKeyException;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import Views.Constants.testStates;
 import Model.Constants.testTypes;
 import Swing.MainFrame;
+import Swing.SelfSustainedTestFrame;
 import Swing.TorqueEquationParameter;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.security.KeyException;
 import java.io.FileReader;
 import java.io.BufferedWriter;
 import java.io.BufferedReader;
@@ -91,6 +96,7 @@ public class Views implements ViewListener {
     Controller appController = null;
 
     private MainFrame frame = new MainFrame();
+    private SelfSustainedTestFrame selfSustaintedFrame =new SelfSustainedTestFrame();
     private SwingPlotWorker plotUpdater = new SwingPlotWorker();
 
     /**
@@ -99,6 +105,12 @@ public class Views implements ViewListener {
     public void setController(Controller controller) {
         appController = controller;
     };
+    /**
+    * @param controller
+    */
+   public boolean DUTModeSelected() {
+       return this.frame.getInputPanel().selfSustainedTestSelection.isSelected();
+   };
 
     /**
      * Returns controller instance
@@ -110,13 +122,20 @@ public class Views implements ViewListener {
     }
 
     private Map<String, XYSeriesCollection> mainDataset = new Hashtable<>();
+    private Map<String, XYSeriesCollection> selfSustainedDataset = new Hashtable<>();
 
-    private XYSeries torque_data = new XYSeries(commands.TORQUE.seriesName);
-    private XYSeries speed_data = new XYSeries(commands.SPEED.seriesName);
-    private XYSeries voltage_data = new XYSeries(commands.VOLTAGE.seriesName);
-    private XYSeries power_data = new XYSeries(commands.POWER.seriesName);
-    private XYSeries current_data = new XYSeries(commands.CURRENT.seriesName);
-    private XYSeries torque_command = new XYSeries(commands.TORQUE_COMMAND.seriesName);
+    private XYSeries torqueData = new XYSeries(commands.TORQUE.seriesName);
+    private XYSeries speedData = new XYSeries(commands.SPEED.seriesName);
+    private XYSeries voltageData = new XYSeries(commands.VOLTAGE.seriesName);
+    private XYSeries powerData = new XYSeries(commands.POWER.seriesName);
+    private XYSeries currentData = new XYSeries(commands.CURRENT.seriesName);
+    private XYSeries torqueCommandData = new XYSeries(commands.TORQUE_COMMAND.seriesName);
+
+    private XYSeries selfSustainedTorqueData = new XYSeries(commands.DUT_TORQUE.seriesName);
+    private XYSeries selfSustainedSpeedData = new XYSeries(commands.DUT_SPEED.seriesName);
+    private XYSeries selfSustainedVoltageData = new XYSeries(commands.DUT_VOLTAGE.seriesName);
+    private XYSeries selfSustainedPowerData = new XYSeries(commands.DUT_POWER.seriesName);
+    private XYSeries selfSustainedCurrentData = new XYSeries(commands.DUT_CURRENT.seriesName);
 
     /**
      * Actualiza las mediciones en pantalla, agrega la unidad de medida al final de
@@ -169,7 +188,15 @@ public class Views implements ViewListener {
                         if (key == "speed") {
                             mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
                         } else {
-                            mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
+                            try{
+                                
+                                mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
+                            }
+                            catch(Exception e)
+                            {
+                                System.out.println(key);
+                                selfSustainedDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
+                            }
 
                         }
 
@@ -295,7 +322,12 @@ public class Views implements ViewListener {
         frame.getInputPanel().openFileButton.addActionListener(new ButtonHandler());
         frame.getInputPanel().torqueTestModeComboBox.addItemListener(new TestTypeHandler());
         frame.getInputPanel().testPeriodsSpinner.addChangeListener(new PeriodExtensionHandler());
+
+        frame.getInputPanel().selfSustainedTestSelection.addActionListener(new ButtonHandler());
+        frame.getInputPanel().openDUTFileButton.addActionListener(new ButtonHandler());
+
         createChart();
+        createSelfSustainedChart();
         this.blockInput(testStates.INITIAL);
 
     }
@@ -393,12 +425,14 @@ public class Views implements ViewListener {
         mainDataset.put(commands.CURRENT.seriesName, new XYSeriesCollection());
         mainDataset.put(commands.POWER.seriesName, new XYSeriesCollection());
 
-        mainDataset.get(commands.TORQUE.seriesName).addSeries(torque_data);
-        mainDataset.get(commands.TORQUE.seriesName).addSeries(torque_command);
-        mainDataset.get(commands.POWER.seriesName).addSeries(power_data);
-        mainDataset.get(commands.SPEED.seriesName).addSeries(speed_data);
-        mainDataset.get(commands.VOLTAGE.seriesName).addSeries(voltage_data);
-        mainDataset.get(commands.CURRENT.seriesName).addSeries(current_data);
+        mainDataset.get(commands.TORQUE.seriesName).addSeries(torqueData);
+        mainDataset.get(commands.TORQUE.seriesName).addSeries(torqueCommandData);
+        mainDataset.get(commands.VOLTAGE.seriesName).addSeries(voltageData);
+        mainDataset.get(commands.SPEED.seriesName).addSeries(speedData);
+        mainDataset.get(commands.CURRENT.seriesName).addSeries(currentData);
+        mainDataset.get(commands.POWER.seriesName).addSeries(powerData);
+
+        
 
         // construct the plot
         XYPlot topPlot = new XYPlot();
@@ -459,6 +493,87 @@ public class Views implements ViewListener {
         plot.add(bottomPlot);
         JFreeChart chart = new JFreeChart("Ensayo en tiempo real", null, plot, true);
         frame.setChart(chart);
+        return chart;
+    }
+    /**
+     * Creates Chart plot
+     * 
+     * @return JFreeChart
+     */
+    private JFreeChart createSelfSustainedChart() {
+
+
+        selfSustainedDataset.put(commands.DUT_TORQUE.seriesName, new XYSeriesCollection());
+        selfSustainedDataset.put(commands.DUT_VOLTAGE.seriesName, new XYSeriesCollection());
+        selfSustainedDataset.put(commands.DUT_SPEED.seriesName, new XYSeriesCollection());
+        selfSustainedDataset.put(commands.DUT_CURRENT.seriesName, new XYSeriesCollection());
+        selfSustainedDataset.put(commands.DUT_POWER.seriesName, new XYSeriesCollection());
+
+        selfSustainedDataset.get(commands.DUT_TORQUE.seriesName).addSeries(selfSustainedTorqueData);
+        selfSustainedDataset.get(commands.DUT_VOLTAGE.seriesName).addSeries(selfSustainedVoltageData);
+        selfSustainedDataset.get(commands.DUT_SPEED.seriesName).addSeries(selfSustainedSpeedData);
+        selfSustainedDataset.get(commands.DUT_CURRENT.seriesName).addSeries(selfSustainedCurrentData);
+        selfSustainedDataset.get(commands.DUT_POWER.seriesName).addSeries(selfSustainedPowerData);
+
+        // construct the plot
+        XYPlot topPlot = new XYPlot();
+        topPlot.setDataset(0, selfSustainedDataset.get(commands.DUT_TORQUE.seriesName));
+        topPlot.setDataset(1, selfSustainedDataset.get(commands.DUT_SPEED.seriesName));
+        topPlot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
+        topPlot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+        topPlot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
+        topPlot.getRenderer(0).setSeriesStroke(0, new BasicStroke(2f));
+        topPlot.getRenderer(0).setSeriesStroke(1, new BasicStroke(2f));
+        topPlot.getRenderer(1).setSeriesStroke(0, new BasicStroke(2f));
+
+        /*
+         * renderer.setSeriesStroke(1, new BasicStroke(2f));
+         * XYItemRenderer renderer2=topPlot.getRenderer(1);
+         * renderer2.setSeriesStroke(0, new BasicStroke(2f));
+         */
+
+        topPlot.setRangeAxis(0, new NumberAxis("Torque [Nm]"));
+        topPlot.setRangeAxis(1, new NumberAxis("Velocidad [RPM]"));
+
+        topPlot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
+        topPlot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
+        topPlot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
+
+        topPlot.mapDatasetToRangeAxis(0, 0);
+        topPlot.mapDatasetToRangeAxis(1, 1);
+        // customize the plot with renderers and axis
+        XYPlot bottomPlot = new XYPlot();
+        bottomPlot.setDataset(0, selfSustainedDataset.get(commands.DUT_VOLTAGE.seriesName));
+        bottomPlot.setDataset(1, selfSustainedDataset.get(commands.DUT_CURRENT.seriesName));
+        bottomPlot.setDataset(2, selfSustainedDataset.get(commands.DUT_POWER.seriesName));
+        bottomPlot.setRenderer(0, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.getRenderer(0).setSeriesStroke(0, new BasicStroke(2f));
+
+        bottomPlot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.getRenderer(1).setSeriesStroke(0, new BasicStroke(2f));
+
+        bottomPlot.setRenderer(2, new XYLineAndShapeRenderer(true, false));
+        bottomPlot.getRenderer(2).setSeriesStroke(0, new BasicStroke(2f));
+
+        bottomPlot.setRangeAxis(0, new NumberAxis("Tensión [Vrms]"));
+        bottomPlot.setRangeAxis(1, new NumberAxis("Corriente [Arms]"));
+        bottomPlot.setRangeAxis(2, new NumberAxis("Potencia [KW]"));
+        bottomPlot.setRangeAxisLocation(0, AxisLocation.BOTTOM_OR_RIGHT);
+        bottomPlot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_RIGHT);
+        bottomPlot.setRangeAxisLocation(2, AxisLocation.BOTTOM_OR_RIGHT);
+        bottomPlot.mapDatasetToRangeAxis(0, 0);
+        bottomPlot.mapDatasetToRangeAxis(1, 1);
+        bottomPlot.mapDatasetToRangeAxis(2, 2);
+        bottomPlot.setDomainAxis(new NumberAxis("Tiempo[ms]"));
+
+        // generate the chart
+        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(new NumberAxis("Tiempo [ms]"));
+        plot.setDomainPannable(true);
+        plot.setRangePannable(true);
+        plot.add(topPlot);
+        plot.add(bottomPlot);
+        JFreeChart chart = new JFreeChart("Ensayo en tiempo real (DUT)", null, plot, true);
+        selfSustaintedFrame.setChart(chart);
         return chart;
     }
 
@@ -571,16 +686,40 @@ public class Views implements ViewListener {
     }
 
     /**
+     * Creates torque vs time plot
+     */
+    private void plotSpeedTime() {
+
+        TorqueTimeValues speedTime = new TorqueTimeValues(getController().getSpeedTimeValues());
+        selfSustainedDataset.get(commands.DUT_SPEED.seriesName).getSeries(commands.DUT_SPEED.seriesName).clear();
+        for (int i = 0; i < speedTime.length(); i++) {
+            selfSustainedDataset.get(commands.DUT_SPEED.seriesName).getSeries(commands.DUT_SPEED.seriesName).add(
+                    Float.valueOf(speedTime.getTimestamp(i)),
+                    Float.valueOf(speedTime.getValue(i)));
+            ;
+        }
+
+    }
+
+    /**
      * Stores chart data to CSV file
      * 
      * @param filename
      */
+    //TODO: esto no guarda todos los datos por algun motivo
     private void storeDataSet(String filename) {
 
         java.util.List<String> csv = new ArrayList<>();
         int maxItemCount = 0;
+        if(this.DUTModeSelected())
+        {
+            mainDataset.putAll(selfSustainedDataset);
+        }
         for (String series : mainDataset.keySet()) {
             int itemCount = this.mainDataset.get(series).getSeries(series).getItemCount();
+            System.out.print(series);
+            System.out.print(" : ");
+            System.out.print(itemCount);
             if (maxItemCount < itemCount) {
                 maxItemCount = itemCount;
             }
@@ -626,7 +765,7 @@ public class Views implements ViewListener {
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot write mainDataset", e);
+            throw new IllegalStateException("Cannot write dataset", e);
         }
         System.out.println("exporte como csv");
     }
@@ -659,20 +798,18 @@ public class Views implements ViewListener {
                             getController().setTorqueVsSpeedParameters(
                                     frame.getInputPanel().torqueEquationParameters.getParameterValues());
 
-                            blockInput(testStates.TEST_RUNNING);
+                            //blockInput(testStates.TEST_RUNNING);
                         } catch (Exception e) {
 
-                            System.err.println("Tire error");
+                            alert(e.getMessage());
 
-                            System.err.println(e.getMessage());
-
-                            blockInput(testStates.TEST_RUNNING);
-                            // blockInput(testStates.TEST_PARAMETER_READY);
+                            //blockInput(testStates.TEST_RUNNING);
+                            blockInput(testStates.TEST_PARAMETER_LOAD);
                         }
                     } else if (test == testTypes.TORQUE_VS_TIME) {
 
                         getController().selectTorqueVsTime();
-                        blockInput(testStates.TEST_RUNNING);
+                        //blockInput(testStates.TEST_RUNNING);
 
                     } else if (test == testTypes.MIXED_TEST) {
 
@@ -687,19 +824,22 @@ public class Views implements ViewListener {
                             System.err.println("Tire error");
 
                             System.err.println(e.getMessage());
-
-                            blockInput(testStates.TEST_RUNNING);
+                            blockInput(testStates.TEST_PARAMETER_LOAD);
                         }
 
                     }
-                    blockInput(testStates.TEST_RUNNING);
+                    if(frame.getInputPanel().selfSustainedTestSelection.isSelected())
+                    {
+                        getController().selectSelfSustainedMode();
+                    }
+                    //blockInput(testStates.TEST_RUNNING);
 
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
 
-                    // blockInput(testStates.TEST_PARAMETER_LOAD);
-                    blockInput(testStates.TEST_RUNNING);
+                    blockInput(testStates.TEST_PARAMETER_LOAD);
+                    //blockInput(testStates.TEST_RUNNING);
                 }
             } else if (WRITE_CSV.equals(cmd)) {
                 String pattern = "yyyyMMdd HHmmss";
@@ -729,15 +869,15 @@ public class Views implements ViewListener {
                 try {
 
                     getController().connect(url);
-                    // Thread.sleep(1000);
+                    Thread.sleep(1000);
                     getController().PLCStart();
                     blockInput(testStates.PLC_CONNECTED);
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
 
-                    blockInput(testStates.PLC_CONNECTED);
-                    // blockInput(testStates.INITIAL);
+                    //blockInput(testStates.PLC_CONNECTED);
+                    blockInput(testStates.INITIAL);
                 }
             } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
                 getController().stopMeasurements();
@@ -824,9 +964,7 @@ public class Views implements ViewListener {
                     alert(e.getMessage());
                 }
                 // TODO Agregar lógica de inicio de ensayo
-            } else if (PAUSE_BUTTON_LABEL.equals(cmd))
-
-            {
+            } else if (PAUSE_BUTTON_LABEL.equals(cmd)) {
                 frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
                 System.err.println("estoy en pausa");
                 try {
@@ -837,14 +975,39 @@ public class Views implements ViewListener {
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
                 }
-                // TODO Agregar lógica de inicio de ensayo
+                // TODO Agregar lógica de reinicio de ensayo
+
+            } else if (SELF_SUSTAINED_TEST_LABEL.equals(cmd)) {
+                if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
+                    selfSustaintedFrame.setVisible(true);
+                    frame.getInputPanel().DUTFilename.setVisible(true);
+                    frame.getInputPanel().openDUTFileButton.setVisible(true);
+                    createSelfSustainedChart();
+                } else {
+                    selfSustaintedFrame.setVisible(false);
+                    frame.getInputPanel().DUTFilename.setVisible(false);
+                    frame.getInputPanel().openDUTFileButton.setVisible(false);
+
+                }
+            } else if (SELF_SUSTAINED_TEST_IMPORT_LABEL.equals(cmd)) {
+                JFileChooser c = new JFileChooser();
+                // Demonstrate "Open" dialog:
+                int rVal = c.showOpenDialog(Views.this.frame);
+                if (rVal == JFileChooser.APPROVE_OPTION) {
+                    frame.getInputPanel().DUTFilename.setText(c.getSelectedFile().getName());
+                    String dir = c.getCurrentDirectory().toString();
+                    String path = dir + "\\" + frame.getInputPanel().DUTFilename.getText();
+
+                    getController().createSpeedTimeFromCSV(path);
+                    plotSpeedTime();
+                }
+                if (rVal == JFileChooser.CANCEL_OPTION) {
+                    frame.getInputPanel().filename.setText("");
+                }
 
             }
-
         }
-
     }
-
     /**
      * Implements behaviour for
      * different test types
@@ -869,6 +1032,7 @@ public class Views implements ViewListener {
                     mixedTestVisibility(true);
                 }
             }
+
         }
 
     }

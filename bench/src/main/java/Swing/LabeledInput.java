@@ -6,7 +6,7 @@ import javax.swing.JTextField;
 
 public class LabeledInput extends JTextField {
         JLabel inputLabel = new JLabel();
-        JTextField input = new JTextField(20);
+        JTextField input = new JTextField(15);
 
         LabeledInput(String label) {
             inputLabel.setText(label);

@@ -17,8 +17,10 @@ public final class Constants {
     public static final String START_BUTTON_LABEL = "Iniciar ensayo";
     public static final String SHUTDOWN_BUTTON_LABEL = "Apagar";
     public static final String SAVE_CSV_BUTTON_LABEL = "Exportar curvas como CSV";
-    public static final String BROWSE_FILE_BUTTON_LABEL = "Importar curva...";
+    public static final String BROWSE_FILE_BUTTON_LABEL = "Importar curva torque-tiempo...";
     public static final String SET_TEST_PARAMETERS_BUTTON_LABEL= "Fijar parámetros";
+    public static final String SELF_SUSTAINED_TEST_LABEL="Ensayo autocontenido";
+    public static final String SELF_SUSTAINED_TEST_IMPORT_LABEL="Importar curva velocidad-tiempo...";
     public static final String CSV_DELIMITER=",";
     public static final String WRITE_CSV="Exportar como CSV";
     public static final String READ_CSV="Importar CSV";
@@ -28,7 +30,6 @@ public final class Constants {
     public static final String DEFAULT_SERVER_ADDRESS = "http://169.254.11.22/soap/opcxml";
     
     public static final String CSV_FILEPATH="C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\";
-    //TODO: Implementar maquina de estados
     public enum testStates {
         INITIAL(),
         PLC_CONNECTED(),

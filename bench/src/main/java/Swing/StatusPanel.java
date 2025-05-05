@@ -18,7 +18,7 @@ public class StatusPanel extends JPanel {
     
     public StatusPanel() {
         this.setBorder(new EmptyBorder(5, 5, 5, 5));
-        this.setLayout( new GridLayout(4,1,10,0));
+        this.setLayout( new GridLayout(1,4,0,0));
         try{
             background=ImageIO.read(new File("C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\Codigo\\Pruebas OPC V\\bench\\src\\main\\resources\\danger_texture.jpg"));
                 
@@ -36,7 +36,7 @@ public class StatusPanel extends JPanel {
         if(background!=null)
         {
 
-            g.drawImage(background, 0, 0, getWidth(), getHeight(), null); // image scaled
+            g.drawImage(background, 0, 0, getWidth(), getHeight()*6, null); // image scaled
         }
     }
  

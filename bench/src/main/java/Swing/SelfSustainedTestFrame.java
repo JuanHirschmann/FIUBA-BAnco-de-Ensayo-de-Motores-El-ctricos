@@ -7,23 +7,18 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.renderer.AbstractRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 
-public class MainFrame extends JFrame{
+public class SelfSustainedTestFrame extends JFrame{
     
-    public JPanel userMessagePanel =new JPanel();
-    public InputPanel inputPanel = new InputPanel();
     
     ChartPanel chartPanel = new ChartPanel(null);
-    public MainFrame()
+    public SelfSustainedTestFrame()
     {
+        this.setVisible(false);
         
         try
         {
@@ -38,18 +33,9 @@ public class MainFrame extends JFrame{
         setLocation(0,0);
         setTitle("Banco de ensayo - FIUBA");
         setLayout(new BorderLayout(0,0));
-        setVisible(true);
-        add(inputPanel,BorderLayout.NORTH);
+        setVisible(false);
         
         add(chartPanel,BorderLayout.CENTER);
-    }
-    
-    /** 
-     * @return InputPanel
-     */
-    public InputPanel getInputPanel()
-    {
-        return inputPanel;
     }
     
     /** 
@@ -58,13 +44,16 @@ public class MainFrame extends JFrame{
     public void setChart(JFreeChart chart)
     {
         this.chartPanel.setChart(chart);
+        /* XYItemRenderer renderer=chart.getXYPlot().getRenderer();
+        renderer.setDefaultStroke(new BasicStroke(10.0f));
+        ((AbstractRenderer) renderer).setAutoPopulateSeriesStroke(false); */
         this.chartPanel.setDomainZoomable(true);
         this.chartPanel.setRangeZoomable(true);
     }
     public static void main(String[] args)
     {
         
-        new MainFrame();
+        new SelfSustainedTestFrame();
         
     }
 }
