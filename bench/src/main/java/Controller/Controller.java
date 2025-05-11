@@ -1,6 +1,7 @@
 package Controller;
 
 import Model.Constants.commands;
+import Model.Constants.serverSideTestError;
 import Model.Constants.serverSideTestStatus;
 import Model.Constants.testStatus;
 import Model.Constants.testTypes;
@@ -8,6 +9,7 @@ import Swing.TorqueEquationParameter;
 import Model.Model;
 import Views.Views;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -40,18 +42,22 @@ public class Controller {
     private TorqueTimeValues speedTimeValues = new TorqueTimeValues();
 
     ScheduledExecutorService torqueTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService voltageTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService currentTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService powerTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService speedTimer = Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService voltageTimer = Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService currentTimer = Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService powerTimer = Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService speedTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService bufferTimer = Executors.newScheduledThreadPool(10);
 
-    ScheduledExecutorService DUTTorqueTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService DUTVoltageTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService DUTCurrentTimer = Executors.newScheduledThreadPool(10);
-    ScheduledExecutorService DUTPowerTimer = Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService DUTTorqueTimer =
+    // Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService DUTVoltageTimer =
+    // Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService DUTCurrentTimer =
+    // Executors.newScheduledThreadPool(10);
+    // ScheduledExecutorService DUTPowerTimer =
+    // Executors.newScheduledThreadPool(10);
     ScheduledExecutorService DUTBufferTimer = Executors.newScheduledThreadPool(10);
-
+    //
     ScheduledExecutorService lowPriorityTimer = Executors.newScheduledThreadPool(10);
 
     public Controller() {
@@ -77,9 +83,10 @@ public class Controller {
 
         }
         if (model.isConnected()) {
-            System.out.print(endtime_ms);
-            System.out.print("AAA");
             model.setTestEndTime(endtime_ms);
+        }else
+        {
+            throw new ConnectException();
         }
     }
 
@@ -148,25 +155,52 @@ public class Controller {
      * starts the measurements for variables at a fixed rate
      */
     public void startMeasurements() {
-        // TODO: Asegurar que cada medición corra en un hilo por separado
-        torqueTimer.scheduleAtFixedRate(new updateMeasurements(commands.TORQUE), 0, 200, TimeUnit.MILLISECONDS);
-        voltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE), 50, 200,
-                TimeUnit.MILLISECONDS);
-        currentTimer.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT), 100, 200,
-                TimeUnit.MILLISECONDS);
-        powerTimer.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 150, 200, TimeUnit.MILLISECONDS);
-        speedTimer.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 200, 200, TimeUnit.MILLISECONDS);
+        List<commands> measuredVars = new ArrayList<commands>();
+        measuredVars.add(commands.TORQUE);
+        // if()
+        // measuredVars.add(commands.TORQUE_COMMAND);//TODO: Solo con torque-time
+        measuredVars.add(commands.VOLTAGE);
+        measuredVars.add(commands.CURRENT);
+        measuredVars.add(commands.POWER);
+        measuredVars.add(commands.SPEED);
         if (view.DUTModeSelected()) {
-            DUTTorqueTimer.scheduleAtFixedRate(new updateMeasurements(commands.DUT_TORQUE), 0, 200,
-                    TimeUnit.MILLISECONDS);
-            DUTVoltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.DUT_VOLTAGE), 50, 200,
-                    TimeUnit.MILLISECONDS);
-            DUTCurrentTimer.scheduleAtFixedRate(new updateMeasurements(commands.DUT_CURRENT), 100, 200,
-                    TimeUnit.MILLISECONDS);
-            DUTPowerTimer.scheduleAtFixedRate(new updateMeasurements(commands.DUT_POWER), 150, 200,
-                    TimeUnit.MILLISECONDS);
 
+            measuredVars.add(commands.DUT_TORQUE);
+            measuredVars.add(commands.DUT_VOLTAGE);
+            measuredVars.add(commands.DUT_CURRENT);
+            measuredVars.add(commands.DUT_POWER);
+            // measuredVars.add(commands.DUT_SPEED);
         }
+        // TODO: Asegurar que cada medición corra en un hilo por separado
+        System.err.println("empece a medir");
+        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 200, TimeUnit.MILLISECONDS);
+        /*
+         * voltageTimer.scheduleAtFixedRate(new updateMeasurements(commands.VOLTAGE),
+         * 100, 800,
+         * TimeUnit.MILLISECONDS);
+         * currentTimer.scheduleAtFixedRate(new updateMeasurements(commands.CURRENT),
+         * 200, 800,
+         * TimeUnit.MILLISECONDS);
+         * powerTimer.scheduleAtFixedRate(new updateMeasurements(commands.POWER), 300,
+         * 800, TimeUnit.MILLISECONDS);
+         * speedTimer.scheduleAtFixedRate(new updateMeasurements(commands.SPEED), 400,
+         * 800, TimeUnit.MILLISECONDS);
+         * if (view.DUTModeSelected()) {
+         * DUTTorqueTimer.scheduleAtFixedRate(new
+         * updateMeasurements(commands.DUT_TORQUE), 500, 800,
+         * TimeUnit.MILLISECONDS);
+         * DUTVoltageTimer.scheduleAtFixedRate(new
+         * updateMeasurements(commands.DUT_VOLTAGE), 600, 800,
+         * TimeUnit.MILLISECONDS);
+         * DUTCurrentTimer.scheduleAtFixedRate(new
+         * updateMeasurements(commands.DUT_CURRENT), 700, 800,
+         * TimeUnit.MILLISECONDS);
+         * DUTPowerTimer.scheduleAtFixedRate(new updateMeasurements(commands.DUT_POWER),
+         * 750, 800,
+         * TimeUnit.MILLISECONDS);
+         * 
+         * }
+         */
     }
 
     /*
@@ -174,10 +208,10 @@ public class Controller {
      */
     public void stopMeasurements() {
         torqueTimer.shutdown();
-        voltageTimer.shutdown();
-        currentTimer.shutdown();
-        powerTimer.shutdown();
-        speedTimer.shutdown();
+        // voltageTimer.shutdown();
+        // currentTimer.shutdown();
+        // powerTimer.shutdown();
+        // speedTimer.shutdown();
     }
 
     /**
@@ -245,7 +279,7 @@ public class Controller {
 
             model.connect(targetIP);
             System.out.println(targetIP);
-            lowPriorityTimer.scheduleAtFixedRate(new lowPriorityUpdate(), 20, 400, TimeUnit.MILLISECONDS);
+            lowPriorityTimer.scheduleAtFixedRate(new lowPriorityUpdate(), 20, 1000, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
@@ -396,6 +430,7 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
+
     /**
      * Selects Torque vs Time test type.
      * Checks for server connectivity, CSV file length and maximum torque
@@ -405,16 +440,17 @@ public class Controller {
     public void selectSelfSustainedMode() throws ConnectException {
         // TODO: SACAR EL !
         if (model.isConnected()) {
-            this.torqueTimeValues.speedCommandCheck();
-            
+            this.speedTimeValues.speedCommandCheck();
+
             // Initial delay to avoid stepping on model.setTestEndTime
             DUTBufferTimer.scheduleAtFixedRate(new sendSpeedCommands(), 1000, 1000, TimeUnit.MILLISECONDS);
-            //TODO: SELECT SELF_SUSTAINED
-            //model.selectTorqueVsTime();
+            // TODO: SELECT SELF_SUSTAINED
+            // model.selectTorqueVsTime();
         } else {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
+
     /**
      * Sets torque vs speed test type parameters. Checks for server connection,
      * D parameter's maximum value and sign.
@@ -427,12 +463,13 @@ public class Controller {
         if (model.isConnected()) {
             Float value;
             try {
-                value=Float.valueOf(parameters.get("A").getValue());
-                value=Float.valueOf(parameters.get("B").getValue());
-                value=Float.valueOf(parameters.get("C").getValue());
-                value=Float.valueOf(parameters.get("D").getValue());
+                value = Float.valueOf(parameters.get("A").getValue());
+                value = Float.valueOf(parameters.get("B").getValue());
+                value = Float.valueOf(parameters.get("C").getValue());
+                value = Float.valueOf(parameters.get("D").getValue());
             } catch (Exception e) {
-                throw new IllegalArgumentException("Los coeficientes de la ecuación cupla-velocida deben especificarse con separador decimal punto (.). ");
+                throw new IllegalArgumentException(
+                        "Los coeficientes de la ecuación cupla-velocida deben especificarse con separador decimal punto (.). ");
             }
             if (Float.valueOf(parameters.get("D").getValue()) < 0) {
 
@@ -467,43 +504,76 @@ public class Controller {
 
     }
 
+    private void handleTestError(serverSideTestError testError) {
+
+       // view.updateTestStatus(testError);
+        if (testError != serverSideTestError.NO_ERROR) {
+            view.alert(testError.getResponseMessage());
+
+        }
+
+    }
+
     // TODO: Agregar el TORQUE_COMMAND
     /*
      * Implements the update of measurments on to a measurement
      * buffer.
      */
     private class updateMeasurements implements Runnable {
-        private String measurement;
+        private Map<String, String> measurement = new Hashtable<String, String>();
         private long timestamp;
         private long measurement_start_time = 0;
-        private commands command;
+        private List<commands> command = new ArrayList<commands>();
         private long delay;
 
-        updateMeasurements(commands command) {
-            this.command = command;
+        updateMeasurements(List<commands> command) {
+
+            this.command.addAll(command);
         };
 
         public void run() {
             // Esto termina tienendo un lag de 200ms o mas
-            Random rand = new Random();
+
+            // Random rand = new Random();
             if (measurement_start_time == 0) {
                 this.measurement_start_time = System.currentTimeMillis();
             }
 
             this.timestamp = System.currentTimeMillis() - measurement_start_time;
-            // System.out.println(timestamp);
             try {
-                if (model.isConnected()) {
-                    this.delay = System.currentTimeMillis();
-                    this.measurement = model.readVar(command.varPath, command.varName);
-                    this.delay = System.currentTimeMillis() - this.delay;
-                    // System.out.print("Delay: ");
-                    // System.out.println(this.delay);
 
-                    measurementsBufferedValues.addValue(command.seriesName, Float.valueOf(this.measurement),
-                            timestamp - delay / 2);
+                if (model.isConnected()) {
+
+                    /*
+                     * this.delay = System.currentTimeMillis();
+                     * this.measurement = model.readVar(command.varPath, command.varName);
+                     * this.delay = System.currentTimeMillis() - this.delay;
+                     * // System.out.print("Delay: ");
+                     * // System.out.println(this.delay);
+                     * 
+                     * measurementsBufferedValues.addValue(command.seriesName,
+                     * Float.valueOf(this.measurement),
+                     * timestamp - delay / 2);
+                     */
+                    List<String> varNames = new ArrayList<String>();
+                    for (int i = 0; i < this.command.size(); i++) {
+                        varNames.add(this.command.get(i).varName);
+                    }
+
+                    this.delay = System.currentTimeMillis();
+                    // System.out.println(varNames);
+                    this.measurement = model.readVars(VAR_PATH, varNames);
+                    this.delay = System.currentTimeMillis() - this.delay;
+                    // System.err.println(this.measurement);
+                    for (int i = 0; i < command.size(); i++) {
+                        measurementsBufferedValues.addValue(command.get(i).seriesName,
+                                Float.valueOf(this.measurement.get(varNames.get(i))),
+                                timestamp - delay / 2);
+                    }
                 } else {
-                    throw new Exception("d");
+                    System.out.println("Falla en medición");
+
+                    throw new Exception("Error de medición");
                 }
 
             } catch (Exception e) {
@@ -515,7 +585,7 @@ public class Controller {
                 // this.measurement = String.valueOf((timestamp / 1e4) + rand.nextFloat());
                 System.out.println("Falla en medición");
 
-                measurementsBufferedValues.addValue(command.seriesName, Float.NaN, timestamp);
+                // measurementsBufferedValues.addValue(command.g, Float.NaN, timestamp);
                 // measurementsBufferedValues.addValue(command.seriesName, Float.NaN,
                 // timestamp);
                 /*
@@ -547,6 +617,8 @@ public class Controller {
                     view.updateALMStatus(model.ALM_is_active());
                     serverSideTestStatus testStatus = model.getTestStatus();
                     handleTestStatus(testStatus);
+                    serverSideTestError testError = model.getTestError();
+                    handleTestError(testError);
                 } else {
                     view.updateConnectionStatus(false);
                     throw new Exception("Keepalive failed");
@@ -640,7 +712,7 @@ public class Controller {
 
     }
 
-    //TODO: ACTUALIZAR CARGA DE COMANDOS DE VELOCIDAD
+    // TODO: ACTUALIZAR CARGA DE COMANDOS DE VELOCIDAD
     private class sendSpeedCommands implements Runnable {
         private int totalItemsLoadedOnBuffer = 0;
         private boolean allDataLoaded = false;
@@ -666,7 +738,7 @@ public class Controller {
             // Esto termina tienendo un lag de 200ms o mas
 
             int chunkEnd = 0;
-            //view.updateTorqueTimeLoad(totalItemsLoadedOnBuffer, timestamp.size());
+            // view.updateTorqueTimeLoad(totalItemsLoadedOnBuffer, timestamp.size());
             if (this.totalItemsLoadedOnBuffer == timestamp.size()) {
 
                 view.updateLoadedTestStatus(allDataLoaded);

@@ -57,7 +57,7 @@ public class TorqueTimeValues {
         float delta=0;
         for(int i =0;i<this.onePeriodLength-1;i++)
         {
-            delta=Float.valueOf(data.get("timestamp").get(i))-Float.valueOf(data.get("timestamp").get(i));
+            delta=Float.valueOf(data.get("timestamp").get(i+1))-Float.valueOf(data.get("timestamp").get(i));
             if(Float.valueOf(data.get("timestamp").get(i))<min)
             {
                 min=delta;
@@ -78,7 +78,7 @@ public class TorqueTimeValues {
     public void speedCommandCheck() throws IllegalArgumentException
     {
         if (this.length() == 0) {
-            throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
+            throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],velocidad[RPM]).");
         } else if (this.getMax() > 3000) {
             throw new IllegalArgumentException("Velocidad máxima del eje simulador excedida (3000RPM)");
         }else if (this.getMinTimeDelta() < 100) {

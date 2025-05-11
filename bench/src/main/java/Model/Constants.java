@@ -15,11 +15,12 @@ public final class Constants {
         POWER(MEASURED_SIMULATOR_POWER, "Potencia activa", "[kW]"),
         CURRENT(MEASURED_SIMULATOR_CURRENT, "Corriente absoluta ", "[Arms]"),
         VOLTAGE(MEASURED_SIMULATOR_VOLTAGE, "Tensión ", "[Vrms]"),
-        DUT_TORQUE(MEASURED_SIMULATOR_TORQUE, "Torque (DUT)", "[Nm]"),
-        DUT_SPEED(MEASURED_SIMULATOR_SPEED, "Velocidad (DUT)", "[RPM]"),
-        DUT_POWER(MEASURED_SIMULATOR_POWER, "Potencia activa (DUT)", "[kW]"),
-        DUT_CURRENT(MEASURED_SIMULATOR_CURRENT, "Corriente absoluta (DUT)", "[Arms]"),
-        DUT_VOLTAGE(MEASURED_SIMULATOR_VOLTAGE, "Tensión (DUT)", "[Vrms]");
+
+        DUT_TORQUE(MEASURED_DUT_TORQUE, "Torque (DUT)", "[Nm]"),
+        DUT_SPEED(MEASURED_DUT_SPEED, "Velocidad (DUT)", "[RPM]"),
+        DUT_POWER(MEASURED_DUT_POWER, "Potencia activa (DUT)", "[kW]"),
+        DUT_CURRENT(MEASURED_DUT_CURRENT, "Corriente absoluta (DUT)", "[Arms]"),
+        DUT_VOLTAGE(MEASURED_DUT_VOLTAGE, "Tensión (DUT)", "[Vrms]");
 
         public final String varPath;
         public final String varName;
@@ -40,22 +41,51 @@ public final class Constants {
         STOPPED("PARADO",Color.ORANGE),
         ENDED("FIN",Color.GRAY),
         NOT_STARTED("NO INICIADO",Color.GRAY),
-        EMERGENCY_STOP("EMG",Color.RED),
+        EMERGENCY_STOP("EMG",Color.RED, "Sistema en emergencia"),
         READY_TO_START("LISTO",Color.GRAY);
 
         String stateName;
         Color stateColor;
+        String responseMessage;
         serverSideTestStatus(String name,Color color) {
             this.stateName = name;
             this.stateColor=color;
+            this.responseMessage="";
+        }serverSideTestStatus(String name,Color color,String responseMessage) {
+            this.stateName = name;
+            this.stateColor=color;
+            this.responseMessage=responseMessage;
         }
         public Color getColor()
         {
             return this.stateColor;
         }
+        public String getResponseMessage()
+        {
+            return this.responseMessage;
+        }
 
     }
+    public enum serverSideTestError {
+        SLM_NOT_ENGAGED("Módulo de línea desactivado."),
+        AXIS_NOT_ENGAGED("Eje no activado."),
+        EMERGENCY_STOP_ENGAGED("Parada de emergencia activada."),
+        MAX_TORQUE_DERIVATIVE_EXCEEDED("Máxima derivada de cupla excedida."),
+        MAX_TORQUE_VALUE_EXCEEDED("Cupla máxima excedida."),
+        NO_ERROR("Sin error."),
+        KEEPLAIVE_FAILED("Falla de keepalive. Verifique el que el cable de red se encuentre conectado"),
+        UNKNOWN_ERROR("Error desconocido.");
+        String responseMessage;
+        serverSideTestError(String responseMessage) {
+            
+            this.responseMessage=responseMessage;
+        }
+        public String getResponseMessage()
+        {
+            return this.responseMessage;
+        }
 
+    }
     // Variables de programa en SIMOTION
     public static final String VAR_PATH = "SIMOTION";
     public static final String ENABLE_TEST_AXIS = "glob/ENABLE_DUT_MOVEMENT";
@@ -83,10 +113,10 @@ public final class Constants {
     public static final String MEASURED_SIMULATOR_CURRENT = "unit/ladder.ACTUAL_ABSOLUTE_CURRENT"; // Kw
     
     public static final String MEASURED_DUT_SPEED = "glob/ACTUAL_DUT_SPEED_RPM";// RPM
-    public static final String MEASURED_DUT_TORQUE = "glob/ACTUAL_MEASURED_DUT_TORQUE";// Nm
-    public static final String MEASURED_DUT_VOLTAGE = "unit/ladder.ACTUAL_DUT_OUTPUT_VOLTAGE";// Vrms
-    public static final String MEASURED_DUT_POWER = "unit/ladder.ACTUAL_DUT_ACTIVE_POWER"; // Kw
-    public static final String MEASURED_DUT_CURRENT = "unit/ladder.ACTUAL_DUT_ABSOLUTE_CURRENT"; // Kw
+    public static final String MEASURED_DUT_TORQUE = "glob/ACTUAL_DUT_MEASURED_TORQUE";// Nm
+    public static final String MEASURED_DUT_VOLTAGE = "glob/ACTUAL_DUT_OUTPUT_VOLTAGE";// Vrms
+    public static final String MEASURED_DUT_POWER = "glob/ACTUAL_DUT_ACTIVE_POWER"; // Kw
+    public static final String MEASURED_DUT_CURRENT = "glob/ACTUAL_DUT_ABSOLUTE_CURRENT"; // Kw
     public static final String DUT_SPEED_TIME_VALUES = "glob/DUT_SPEED_VALUES";
     public static final String DUT_TIMESTAMP = "glob/DUT_TIMESTAMP";
     public static final String DUT_CLEAR_TO_RECEIVE = "glob/DUT_CLEAR_TO_RECEIVE";
@@ -94,6 +124,7 @@ public final class Constants {
 
     public static final String AXIS_ENABLED_SIGNAL = "unit/LADDER.TEST_DATA.AXIS_ENABLED";
     public static final String TEST_STATUS = "unit/LADDER.TEST_DATA.CURRENT_STATE";
+    public static final String CURRENT_ERROR = "unit/LADDER.TEST_DATA.CURRENT_ERROR";
     public static final int TORQUE_TIME_BUFFER_SIZE = 1024;
     public static final int MAX_CHUNK_SIZE = 256;
     public static final String TORQUE_BIAS = "unit/ladder.TORQUE_BIAS";

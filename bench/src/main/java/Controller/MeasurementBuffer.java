@@ -43,7 +43,7 @@ public class MeasurementBuffer {
     public void addValue(String time_series_name, float measurement, double timestamp) {
         if (data.get(time_series_name) == null) {
             this.addTimeSeries(time_series_name);
-            System.out.println(time_series_name);
+            //System.out.println(time_series_name);
         }
         data.get(time_series_name).add(measurement);
         data.get(time_series_name + "_timestamp").add((float) timestamp);
@@ -99,7 +99,7 @@ public class MeasurementBuffer {
     public static void main(String[] args) {
         MeasurementBuffer buffer = new MeasurementBuffer();
 
-        System.out.println("aca");
+        //System.out.println("aca");
         buffer.addTimeSeries("speed");
 
         double time = 1;
@@ -114,7 +114,7 @@ public class MeasurementBuffer {
             ArrayList<Float> speed = new ArrayList<Float>(buffer.getBufferedData(key));
             //ArrayList<Float> timestamp = new ArrayList<Float>(buffer.getBufferedDataTimestamp(key+""));
             for (int i = 0; i < speed.size(); i++) {
-                System.out.println(speed.get(i));
+                //System.out.println(speed.get(i));
                 //System.out.println(timestamp.get(i));
 
             }

@@ -135,7 +135,7 @@ public class Views {
         inputPanel.add(simulatorPowerValueLabel);
 
         inputPanel.setBackground(Color.GRAY);
-        targetIPInput.setText("http://192.168.214.1/soap/opcxml/");
+        //targetIPInput.setText("http://192.168.214.1/soap/opcxml/");
 
     }
 

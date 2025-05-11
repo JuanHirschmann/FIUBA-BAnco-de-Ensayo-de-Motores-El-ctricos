@@ -36,7 +36,7 @@ public class StatusPanel extends JPanel {
         if(background!=null)
         {
 
-            g.drawImage(background, 0, 0, getWidth(), getHeight()*6, null); // image scaled
+            g.drawImage(background, 0, 0, getWidth(), getHeight()*8, null); // image scaled
         }
     }
  

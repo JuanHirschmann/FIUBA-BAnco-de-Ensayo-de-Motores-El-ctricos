@@ -9,6 +9,8 @@ import static Views.Constants.EMERGENCY_RELEASE_BUTTON_LABEL;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
 import static Views.Constants.PAUSE_BUTTON_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
+import static Views.Constants.PRE_START_WARNING;
+import static Views.Constants.SELF_SUSTAINED_MODE_WARNING;
 import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
@@ -22,18 +24,22 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.awt.Shape;
 import java.awt.desktop.PrintFilesEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.Ellipse2D;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -43,6 +49,7 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.JFileChooser;
@@ -94,10 +101,11 @@ import Model.Constants.testStatus;
 public class Views implements ViewListener {
 
     Controller appController = null;
-
+    private boolean popupVisible = false;
     private MainFrame frame = new MainFrame();
-    private SelfSustainedTestFrame selfSustaintedFrame =new SelfSustainedTestFrame();
+    private SelfSustainedTestFrame selfSustaintedFrame = new SelfSustainedTestFrame();
     private SwingPlotWorker plotUpdater = new SwingPlotWorker();
+    private JDialog dialog = new JDialog();
 
     /**
      * @param controller
@@ -105,12 +113,13 @@ public class Views implements ViewListener {
     public void setController(Controller controller) {
         appController = controller;
     };
+
     /**
-    * @param controller
-    */
-   public boolean DUTModeSelected() {
-       return this.frame.getInputPanel().selfSustainedTestSelection.isSelected();
-   };
+     * @param controller
+     */
+    public boolean DUTModeSelected() {
+        return this.frame.getInputPanel().selfSustainedTestSelection.isSelected();
+    };
 
     /**
      * Returns controller instance
@@ -163,7 +172,7 @@ public class Views implements ViewListener {
                     publish(buffer);
                     getController().clearMeasurementBuffer();
                     try {
-                        Thread.sleep(250);
+                        Thread.sleep(200);
                     } catch (InterruptedException e) {
                         // eat it. caught when interrupt is called
                         System.out.println("MySwingWorker shut down.");
@@ -188,13 +197,12 @@ public class Views implements ViewListener {
                         if (key == "speed") {
                             mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
                         } else {
-                            try{
-                                
+                            try {
+
                                 mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
-                            }
-                            catch(Exception e)
-                            {
-                                System.out.println(key);
+                            } catch (Exception e) {
+
+                                // System.out.println(key);
                                 selfSustainedDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
                             }
 
@@ -275,6 +283,11 @@ public class Views implements ViewListener {
     public void updateTestStatus(serverSideTestStatus testState) {
         frame.getInputPanel().semaphoreIndicator.setColor(testState.getColor());
         frame.getInputPanel().semaphoreIndicator.setText(testState.name());
+        /*
+         * if (testState == serverSideTestStatus.EMERGENCY_STOP) {
+         * this.alert(testState.getResponseMessage());
+         * }
+         */
 
     }
 
@@ -432,8 +445,6 @@ public class Views implements ViewListener {
         mainDataset.get(commands.CURRENT.seriesName).addSeries(currentData);
         mainDataset.get(commands.POWER.seriesName).addSeries(powerData);
 
-        
-
         // construct the plot
         XYPlot topPlot = new XYPlot();
         topPlot.setDataset(0, mainDataset.get(commands.TORQUE.seriesName));
@@ -495,13 +506,13 @@ public class Views implements ViewListener {
         frame.setChart(chart);
         return chart;
     }
+
     /**
      * Creates Chart plot
      * 
      * @return JFreeChart
      */
     private JFreeChart createSelfSustainedChart() {
-
 
         selfSustainedDataset.put(commands.DUT_TORQUE.seriesName, new XYSeriesCollection());
         selfSustainedDataset.put(commands.DUT_VOLTAGE.seriesName, new XYSeriesCollection());
@@ -644,8 +655,23 @@ public class Views implements ViewListener {
      * @param message
      */
     public void alert(String message) {
-        frame.getInputPanel().userMessageAlert.showMessageDialog(null, message, "Alerta",
-                JOptionPane.ERROR_MESSAGE);// setText(message);
+
+        if (!this.popupVisible) {
+            frame.getInputPanel().userMessageAlert.setMessage(message);
+            frame.getInputPanel().userMessageAlert.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
+            this.dialog = frame.getInputPanel().userMessageAlert.createDialog("Alerta");
+            // JLabel alertMsg=new JLabel(message);
+            // this.dialog.add(alertMsg);
+            // this.dialog.setAlwaysOnTop(true);
+            this.dialog.setModal(false);
+            this.dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            this.dialog.setVisible(true);
+            this.popupVisible = true;
+
+        }
+        if (!this.dialog.isVisible()) {
+            this.popupVisible = false;
+        }
 
     }
 
@@ -706,13 +732,12 @@ public class Views implements ViewListener {
      * 
      * @param filename
      */
-    //TODO: esto no guarda todos los datos por algun motivo
+    // TODO: esto no guarda todos los datos por algun motivo
     private void storeDataSet(String filename) {
 
         java.util.List<String> csv = new ArrayList<>();
         int maxItemCount = 0;
-        if(this.DUTModeSelected())
-        {
+        if (this.DUTModeSelected()) {
             mainDataset.putAll(selfSustainedDataset);
         }
         for (String series : mainDataset.keySet()) {
@@ -781,35 +806,31 @@ public class Views implements ViewListener {
             System.err.println("aca");
 
             if (SET_TEST_PARAMETERS_BUTTON_LABEL.equals(cmd)) {
-
                 try {
-                    // Cargar tipo de parámetro
                     testTypes test = getTestType();
-                    // int runtime=this.getTestRuntime();
-                    System.out.println(test);
-
-                    blockInput(testStates.TEST_PARAMETER_READY);
-
+                    // blockInput(testStates.TEST_PARAMETER_READY);
                     if (test == testTypes.TORQUE_VS_SPEED) {
-                        System.out.println("torquevsspeed");
                         try {
-                            getController().selectTorqueVsSpeed();
                             getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
+                            getController().selectTorqueVsSpeed();
                             getController().setTorqueVsSpeedParameters(
                                     frame.getInputPanel().torqueEquationParameters.getParameterValues());
 
-                            //blockInput(testStates.TEST_RUNNING);
-                        } catch (Exception e) {
+                            blockInput(testStates.TEST_PARAMETER_READY);
 
+                        } catch (ConnectException e) {
                             alert(e.getMessage());
-
-                            //blockInput(testStates.TEST_RUNNING);
+                            blockInput(testStates.TEST_PARAMETER_LOAD);
+                        } catch (IllegalArgumentException e) {
+                            alert(e.getMessage());
                             blockInput(testStates.TEST_PARAMETER_LOAD);
                         }
                     } else if (test == testTypes.TORQUE_VS_TIME) {
 
                         getController().selectTorqueVsTime();
-                        //blockInput(testStates.TEST_RUNNING);
+
+                        blockInput(testStates.TEST_PARAMETER_READY);
+                        // blockInput(testStates.TEST_RUNNING);
 
                     } else if (test == testTypes.MIXED_TEST) {
 
@@ -818,28 +839,27 @@ public class Views implements ViewListener {
                             getController().setTorqueVsSpeedParameters(
                                     frame.getInputPanel().torqueEquationParameters.getParameterValues());
 
-                            blockInput(testStates.TEST_RUNNING);
-                        } catch (Exception e) {
-
-                            System.err.println("Tire error");
-
-                            System.err.println(e.getMessage());
+                            blockInput(testStates.TEST_PARAMETER_READY);
+                        } catch (ConnectException e) {
+                            alert(e.getMessage());
+                            blockInput(testStates.TEST_PARAMETER_LOAD);
+                        } catch (IllegalArgumentException e) {
+                            alert(e.getMessage());
                             blockInput(testStates.TEST_PARAMETER_LOAD);
                         }
 
                     }
-                    if(frame.getInputPanel().selfSustainedTestSelection.isSelected())
-                    {
+                    if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
                         getController().selectSelfSustainedMode();
                     }
-                    //blockInput(testStates.TEST_RUNNING);
-
+                    // blockInput(testStates.TEST_RUNNING);
+                    alert(PRE_START_WARNING);
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
 
                     blockInput(testStates.TEST_PARAMETER_LOAD);
-                    //blockInput(testStates.TEST_RUNNING);
+                    // blockInput(testStates.TEST_RUNNING);
                 }
             } else if (WRITE_CSV.equals(cmd)) {
                 String pattern = "yyyyMMdd HHmmss";
@@ -876,7 +896,7 @@ public class Views implements ViewListener {
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
 
-                    //blockInput(testStates.PLC_CONNECTED);
+                    // blockInput(testStates.PLC_CONNECTED);
                     blockInput(testStates.INITIAL);
                 }
             } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
@@ -899,30 +919,11 @@ public class Views implements ViewListener {
                 }
 
             } else if (EMERGENCY_STOP_BUTTON_LABEL.equals(cmd)) {
-                frame.getInputPanel().emergencyButton.setText(EMERGENCY_RELEASE_BUTTON_LABEL);
+                // frame.getInputPanel().emergencyButton.setText(EMERGENCY_RELEASE_BUTTON_LABEL);
                 System.err.println("estoy en EMG Stop");
-
                 try {
-
                     getController().emergencyStop();
-
                 } catch (Exception e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    alert(e.getMessage());
-                }
-            } else if (EMERGENCY_RELEASE_BUTTON_LABEL.equals(cmd)) {
-                System.err.println("estoy en EMG Stop");
-                frame.getInputPanel().emergencyButton.setText(EMERGENCY_STOP_BUTTON_LABEL);
-                try {
-
-                    getController().emergencyRelease();
-
-                } catch (Exception e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
                     alert(e.getMessage());
                 }
             } else if (POWER_ON_BUTTON_LABEL.equals(cmd)) {
@@ -939,8 +940,7 @@ public class Views implements ViewListener {
 
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
-                    blockInput(testStates.POWER_CONNECTED);
-                    // blockInput(testStates.PLC_CONNECTED);
+                    blockInput(testStates.PLC_CONNECTED);
                 }
             } else if (START_BUTTON_LABEL.equals(cmd)) {
                 System.err.println("estoy en iniciar");
@@ -951,34 +951,29 @@ public class Views implements ViewListener {
 
                 try {
                     getController().start();
-
                     blockInput(testStates.TEST_RUNNING);
-
-                }
-
-                catch (Exception e) {
+                } catch (Exception e) {
                     System.err.println("Tire error");
-                    // blockInput(testStates.TEST_LOAD_READY);
-                    blockInput(testStates.TEST_RUNNING);
+                    blockInput(testStates.TEST_PARAMETER_READY);
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
                 }
                 // TODO Agregar lógica de inicio de ensayo
             } else if (PAUSE_BUTTON_LABEL.equals(cmd)) {
                 frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
-                System.err.println("estoy en pausa");
                 try {
                     getController().stop();
                 } catch (Exception e) {
-                    System.err.println("Tire error");
-
                     System.err.println(e.getMessage());
                     alert(e.getMessage());
+                    frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
+
                 }
                 // TODO Agregar lógica de reinicio de ensayo
 
             } else if (SELF_SUSTAINED_TEST_LABEL.equals(cmd)) {
                 if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
+                    alert(SELF_SUSTAINED_MODE_WARNING);
                     selfSustaintedFrame.setVisible(true);
                     frame.getInputPanel().DUTFilename.setVisible(true);
                     frame.getInputPanel().openDUTFileButton.setVisible(true);
@@ -1008,6 +1003,7 @@ public class Views implements ViewListener {
             }
         }
     }
+
     /**
      * Implements behaviour for
      * different test types
