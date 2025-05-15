@@ -15,6 +15,7 @@ public final class Constants {
     public static final String WRITE_VARIABLE_BUTTON_LABEL = "Escribir variable";
     public static final String PAUSE_BUTTON_LABEL = "Pausar ensayo";
     public static final String START_BUTTON_LABEL = "Iniciar ensayo";
+    public static final String RESUME_BUTTON_LABEL = "Reanudar ensayo";
     public static final String SHUTDOWN_BUTTON_LABEL = "Apagar";
     public static final String SAVE_CSV_BUTTON_LABEL = "Exportar curvas como CSV";
     public static final String BROWSE_FILE_BUTTON_LABEL = "Importar curva torque-tiempo...";

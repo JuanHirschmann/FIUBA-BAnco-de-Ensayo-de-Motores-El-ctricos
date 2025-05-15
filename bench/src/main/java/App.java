@@ -11,9 +11,8 @@ public class App {
     //TODO: MODO DUT
     //TODO: SI EMERGENCY_STOP ENTONCES VOLVER AL ESTADO ANTERIOR, SALVO RUNNING
     //TODO: VELOCIDAD*-1
-    //TODO: ALERTA ANTES DE INICIAR
-    //TODO: ALERTA EN MODO AUTOCONTENIDO
-    //TODO: ENABLE DUT 
+    //TODO: ENABLE DUT
+    //TODO: Ver que pasa con torque-tiempo que no carga el gráfico 
     /** 
      * @param args
      */

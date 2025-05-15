@@ -1,5 +1,6 @@
 package Views;
 
+import static Model.Constants.SOFTWARE_STOP_BUTTON;
 import static Views.Constants.AVAILABLE_TORQUE_MODES;
 import static Views.Constants.BROWSE_FILE_BUTTON_LABEL;
 import static Views.Constants.CONNECT_BUTTON_LABEL;
@@ -17,6 +18,7 @@ import static Views.Constants.START_BUTTON_LABEL;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
 import static Views.Constants.WRITE_CSV;
 import static Views.Constants.SELF_SUSTAINED_TEST_LABEL;
+import static Views.Constants.RESUME_BUTTON_LABEL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.Executors;
@@ -161,7 +163,7 @@ public class Views implements ViewListener {
     private class SwingPlotWorker extends SwingWorker<Boolean, MeasurementBuffer> {
         private static int DISPLAYED_MEASUREMENTS_UPDATE_RATIO = 5;// Cada cuanto chunks actualiza mediciones
         private int chunkCounter = 0;
-        private static int MEAN_SAMPLE_SIZE = 50;
+        private static int MEAN_SAMPLE_SIZE = 5;
 
         @Override
         protected Boolean doInBackground() throws Exception {
@@ -172,7 +174,7 @@ public class Views implements ViewListener {
                     publish(buffer);
                     getController().clearMeasurementBuffer();
                     try {
-                        Thread.sleep(200);
+                        Thread.sleep(400);
                     } catch (InterruptedException e) {
                         // eat it. caught when interrupt is called
                         System.out.println("MySwingWorker shut down.");
@@ -201,8 +203,8 @@ public class Views implements ViewListener {
 
                                 mainDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
                             } catch (Exception e) {
-
-                                // System.out.println(key);
+                                System.out.println(e.getMessage());
+                                System.out.println(key);
                                 selfSustainedDataset.get(key).getSeries(key).add(timestamp.get(i), value.get(i));
                             }
 
@@ -222,9 +224,10 @@ public class Views implements ViewListener {
                         if (seriesLength > MEAN_SAMPLE_SIZE) {
                             sampleSize = MEAN_SAMPLE_SIZE;
                         }
+                        // TODO: Esto a veces rompe el worker
                         for (int i = 0; i < sampleSize; i++) {
-                            accumValue += mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
-                                    .floatValue();
+                            accumValue += 0;/* mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
+                                    .floatValue(); */
                         }
 
                         frame.getInputPanel().displayedMeasurements.addMeasurement(series,
@@ -282,13 +285,16 @@ public class Views implements ViewListener {
      */
     public void updateTestStatus(serverSideTestStatus testState) {
         frame.getInputPanel().semaphoreIndicator.setColor(testState.getColor());
-        frame.getInputPanel().semaphoreIndicator.setText(testState.name());
-        /*
-         * if (testState == serverSideTestStatus.EMERGENCY_STOP) {
-         * this.alert(testState.getResponseMessage());
-         * }
-         */
+        frame.getInputPanel().semaphoreIndicator.setText(testState.getName());
 
+        if (testState == serverSideTestStatus.STOPPED) {
+            frame.getInputPanel().startButton.setText(RESUME_BUTTON_LABEL);
+        } else if (testState == serverSideTestStatus.RUNNING) {
+            frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
+        } else {
+
+            frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
+        }
     }
 
     /**
@@ -660,16 +666,13 @@ public class Views implements ViewListener {
             frame.getInputPanel().userMessageAlert.setMessage(message);
             frame.getInputPanel().userMessageAlert.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
             this.dialog = frame.getInputPanel().userMessageAlert.createDialog("Alerta");
-            // JLabel alertMsg=new JLabel(message);
-            // this.dialog.add(alertMsg);
-            // this.dialog.setAlwaysOnTop(true);
             this.dialog.setModal(false);
             this.dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
             this.dialog.setVisible(true);
             this.popupVisible = true;
 
         }
-        if (!this.dialog.isVisible()) {
+        if (/* !this.dialog.isActive() || */ !frame.getInputPanel().userMessageAlert.isShowing()) {
             this.popupVisible = false;
         }
 
@@ -795,9 +798,69 @@ public class Views implements ViewListener {
         System.out.println("exporte como csv");
     }
 
+    public void validateInput() throws IllegalArgumentException {
+        Float value;
+        testTypes selectedTest = this.getTestType();
+        String endtime_ms = "a";
+        if (selectedTest == testTypes.TORQUE_VS_SPEED) {
+
+            endtime_ms = frame.getInputPanel().stopTime.getText();
+            System.out.println(endtime_ms);
+        } else {
+            TorqueTimeValues torquePath = getController().getTorqueTimeValues();
+            endtime_ms = torquePath.getTimestamp(torquePath.length() - 1);
+            if (torquePath.length() == 0) {
+                throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
+            } else if (torquePath.getMax() > 26) {
+                throw new IllegalArgumentException("El archivo elegido supera el torque máximo del sistema (26Nm).");
+            } else if (torquePath.getMinTimeDelta() < 100) {
+                throw new IllegalArgumentException(
+                        "El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms");
+            }
+        }
+        try {
+            Integer endtime_int = Float.valueOf(endtime_ms).intValue();
+        } catch (NumberFormatException e) {
+            System.out.println(endtime_ms);
+            throw new IllegalArgumentException("La última fila del archivo CSV tiene un formato desconocido.");
+        }
+
+        if (selectedTest == testTypes.TORQUE_VS_SPEED || selectedTest == testTypes.MIXED_TEST) {
+            Map<String, TorqueEquationParameter> parameters = frame.getInputPanel().torqueEquationParameters
+                    .getParameterValues();
+            try {
+                value = Float.valueOf(parameters.get("A").getValue());
+                value = Float.valueOf(parameters.get("B").getValue());
+                value = Float.valueOf(parameters.get("C").getValue());
+                value = Float.valueOf(parameters.get("D").getValue());
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        "Los coeficientes de la ecuación cupla-velocida deben especificarse con separador decimal punto (.). ");
+            }
+            if (Float.valueOf(parameters.get("D").getValue()) < 0) {
+                throw new IllegalArgumentException("El valor del término inercial no puede ser negativo");
+            } else if (Float.valueOf(parameters.get("D").getValue()) > 0.3) {
+                throw new IllegalArgumentException("El valor del término inercial no puede ser mayor a 0.3");
+            }
+        }
+        if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
+            TorqueTimeValues speedPath = getController().getSpeedTimeValues();
+            if (speedPath.length() == 0) {
+                throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
+            } else if (speedPath.getMax() > 3000) {
+                throw new IllegalArgumentException("El archivo elegido supera el torque máximo del sistema (26Nm).");
+            } else if (speedPath.getMinTimeDelta() < 100) {
+                throw new IllegalArgumentException(
+                        "El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms");
+            }
+        }
+
+    }
+
     /**
      * Implements behaviour for button input
      */
+    // TODO: MEJORAR EL MANEJO DE ERRORES
     private class ButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -806,201 +869,281 @@ public class Views implements ViewListener {
             System.err.println("aca");
 
             if (SET_TEST_PARAMETERS_BUTTON_LABEL.equals(cmd)) {
+                handleTestParameterLoad();
+            } else if (WRITE_CSV.equals(cmd)) {
+                this.handleFileOutput();
+            } else if (BROWSE_FILE_BUTTON_LABEL.equals(cmd)) {
+                this.handleTorqueTimeFileInput();
+            } else if (CONNECT_BUTTON_LABEL.equals(cmd)) {
+                this.handleConnectCommand();
+            } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
+                this.handleShutdownCommand();
+            } else if (EMERGENCY_STOP_BUTTON_LABEL.equals(cmd)) {
+                this.handleEmergencyCommand();
+            } else if (POWER_ON_BUTTON_LABEL.equals(cmd)) {
+                this.handlePowerOnCommand();
+            } else if (START_BUTTON_LABEL.equals(cmd)) {
+                this.handleStartCommand();
+            } else if (PAUSE_BUTTON_LABEL.equals(cmd)) {
+                this.handlePauseCommand();
+                // TODO Agregar lógica de reinicio de ensayo
+            } else if (RESUME_BUTTON_LABEL.equals(cmd)) {
+                this.handleResumeCommand();
+            } else if (SELF_SUSTAINED_TEST_LABEL.equals(cmd)) {
+                this.handleSelfSustainedSelection();
+            } else if (SELF_SUSTAINED_TEST_IMPORT_LABEL.equals(cmd)) {
+                this.handleSelfSustainedFileImport();
+            }
+        }
+
+        private void handleTestParameterLoad() {
+            // TODO: Validar en la vista el input
+            boolean testLoadSuccess = true;
+            testTypes test = getTestType();
+            try {
+                validateInput();
+            } catch (IllegalArgumentException e) {
+                testLoadSuccess = false;
+                alert(e.getMessage());
+            }
+            if (test == testTypes.TORQUE_VS_SPEED && testLoadSuccess) {
                 try {
-                    testTypes test = getTestType();
-                    // blockInput(testStates.TEST_PARAMETER_READY);
-                    if (test == testTypes.TORQUE_VS_SPEED) {
-                        try {
-                            getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
-                            getController().selectTorqueVsSpeed();
-                            getController().setTorqueVsSpeedParameters(
-                                    frame.getInputPanel().torqueEquationParameters.getParameterValues());
+                    getController().setTestEndTime(frame.getInputPanel().stopTime.getText());
+                    getController().selectTorqueVsSpeed();
+                    getController().setTorqueVsSpeedParameters(
+                            frame.getInputPanel().torqueEquationParameters.getParameterValues());
 
-                            blockInput(testStates.TEST_PARAMETER_READY);
+                    blockInput(testStates.TEST_PARAMETER_READY);
 
-                        } catch (ConnectException e) {
-                            alert(e.getMessage());
-                            blockInput(testStates.TEST_PARAMETER_LOAD);
-                        } catch (IllegalArgumentException e) {
-                            alert(e.getMessage());
-                            blockInput(testStates.TEST_PARAMETER_LOAD);
-                        }
-                    } else if (test == testTypes.TORQUE_VS_TIME) {
-
-                        getController().selectTorqueVsTime();
-
-                        blockInput(testStates.TEST_PARAMETER_READY);
-                        // blockInput(testStates.TEST_RUNNING);
-
-                    } else if (test == testTypes.MIXED_TEST) {
-
-                        try {
-                            getController().selectMixedTest();
-                            getController().setTorqueVsSpeedParameters(
-                                    frame.getInputPanel().torqueEquationParameters.getParameterValues());
-
-                            blockInput(testStates.TEST_PARAMETER_READY);
-                        } catch (ConnectException e) {
-                            alert(e.getMessage());
-                            blockInput(testStates.TEST_PARAMETER_LOAD);
-                        } catch (IllegalArgumentException e) {
-                            alert(e.getMessage());
-                            blockInput(testStates.TEST_PARAMETER_LOAD);
-                        }
-
-                    }
-                    if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
-                        getController().selectSelfSustainedMode();
-                    }
-                    // blockInput(testStates.TEST_RUNNING);
-                    alert(PRE_START_WARNING);
-                } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                } catch (ConnectException e) {
+                    System.out.println(e.getStackTrace());
                     alert(e.getMessage());
+                    testLoadSuccess = false;
+                    blockInput(testStates.TEST_PARAMETER_LOAD);
+                }
+            } else if (test == testTypes.TORQUE_VS_TIME && testLoadSuccess) {
+                // Esto hacerlo ultimo
+                try {
+
+                    getController().selectTorqueVsTime();
+                    blockInput(testStates.TEST_PARAMETER_READY);
+                } catch (ConnectException e) {
 
                     blockInput(testStates.TEST_PARAMETER_LOAD);
-                    // blockInput(testStates.TEST_RUNNING);
                 }
-            } else if (WRITE_CSV.equals(cmd)) {
-                String pattern = "yyyyMMdd HHmmss";
-                DateFormat df = new SimpleDateFormat(pattern);
-                Date today = Calendar.getInstance().getTime();
-                String todayAsString = df.format(today);
-                storeDataSet(CSV_FILEPATH + todayAsString);
-            } else if (BROWSE_FILE_BUTTON_LABEL.equals(cmd)) {
-                JFileChooser c = new JFileChooser();
-                // Demonstrate "Open" dialog:
-                int rVal = c.showOpenDialog(Views.this.frame);
-                if (rVal == JFileChooser.APPROVE_OPTION) {
-                    frame.getInputPanel().filename.setText(c.getSelectedFile().getName());
-                    String dir = c.getCurrentDirectory().toString();
-                    String path = dir + "\\" + frame.getInputPanel().filename.getText();
 
-                    getController().createTorqueTimeFromCSV(path);
-                    plotTorqueTime();
-                }
-                if (rVal == JFileChooser.CANCEL_OPTION) {
-                    frame.getInputPanel().filename.setText("");
-                }
-            } else if (CONNECT_BUTTON_LABEL.equals(cmd)) {
-
-                String url = getTargetIP();
-                System.err.println(url);
+            } else if (test == testTypes.MIXED_TEST && testLoadSuccess) {
                 try {
-
-                    getController().connect(url);
-                    Thread.sleep(1000);
-                    getController().PLCStart();
-                    blockInput(testStates.PLC_CONNECTED);
-                } catch (Exception e) {
-                    System.err.println(e.getMessage());
-                    alert(e.getMessage());
-
-                    // blockInput(testStates.PLC_CONNECTED);
-                    blockInput(testStates.INITIAL);
-                }
-            } else if (SHUTDOWN_BUTTON_LABEL.equals(cmd)) {
-                getController().stopMeasurements();
-                System.err.println("estoy en apagar");
-                plotUpdater.cancel(true);
-                try {
-
-                    getController().powerOff();
-                    getController().PLCStop();
-                    blockInput(testStates.TEST_END);
-                } catch (Exception e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    alert(e.getMessage());
-                    // blockInput(testStates.TEST_RUNNING);
-                    blockInput(testStates.TEST_END);
-
-                }
-
-            } else if (EMERGENCY_STOP_BUTTON_LABEL.equals(cmd)) {
-                // frame.getInputPanel().emergencyButton.setText(EMERGENCY_RELEASE_BUTTON_LABEL);
-                System.err.println("estoy en EMG Stop");
-                try {
-                    getController().emergencyStop();
-                } catch (Exception e) {
-                    alert(e.getMessage());
-                }
-            } else if (POWER_ON_BUTTON_LABEL.equals(cmd)) {
-
-                System.err.println("estoy en potencia");
-
-                try {
-
-                    getController().powerOn();
-                    blockInput(testStates.POWER_CONNECTED);
-
-                } catch (Exception e) {
-                    System.err.println("Tire error");
-
-                    System.err.println(e.getMessage());
-                    alert(e.getMessage());
-                    blockInput(testStates.PLC_CONNECTED);
-                }
-            } else if (START_BUTTON_LABEL.equals(cmd)) {
-                System.err.println("estoy en iniciar");
-                frame.inputPanel.measurementsPanel.setVisible(true);
-                getController().startMeasurements();
-                plotUpdater.execute();
-                frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
-
-                try {
-                    getController().start();
-                    blockInput(testStates.TEST_RUNNING);
-                } catch (Exception e) {
-                    System.err.println("Tire error");
+                    getController().selectMixedTest();
+                    getController().setTorqueVsSpeedParameters(
+                            frame.getInputPanel().torqueEquationParameters.getParameterValues());
                     blockInput(testStates.TEST_PARAMETER_READY);
-                    System.err.println(e.getMessage());
-                    alert(e.getMessage());
-                }
-                // TODO Agregar lógica de inicio de ensayo
-            } else if (PAUSE_BUTTON_LABEL.equals(cmd)) {
-                frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
-                try {
-                    getController().stop();
+
                 } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                    System.out.println(e.getStackTrace());
                     alert(e.getMessage());
-                    frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
-
-                }
-                // TODO Agregar lógica de reinicio de ensayo
-
-            } else if (SELF_SUSTAINED_TEST_LABEL.equals(cmd)) {
-                if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
-                    alert(SELF_SUSTAINED_MODE_WARNING);
-                    selfSustaintedFrame.setVisible(true);
-                    frame.getInputPanel().DUTFilename.setVisible(true);
-                    frame.getInputPanel().openDUTFileButton.setVisible(true);
-                    createSelfSustainedChart();
-                } else {
-                    selfSustaintedFrame.setVisible(false);
-                    frame.getInputPanel().DUTFilename.setVisible(false);
-                    frame.getInputPanel().openDUTFileButton.setVisible(false);
-
-                }
-            } else if (SELF_SUSTAINED_TEST_IMPORT_LABEL.equals(cmd)) {
-                JFileChooser c = new JFileChooser();
-                // Demonstrate "Open" dialog:
-                int rVal = c.showOpenDialog(Views.this.frame);
-                if (rVal == JFileChooser.APPROVE_OPTION) {
-                    frame.getInputPanel().DUTFilename.setText(c.getSelectedFile().getName());
-                    String dir = c.getCurrentDirectory().toString();
-                    String path = dir + "\\" + frame.getInputPanel().DUTFilename.getText();
-
-                    getController().createSpeedTimeFromCSV(path);
-                    plotSpeedTime();
-                }
-                if (rVal == JFileChooser.CANCEL_OPTION) {
-                    frame.getInputPanel().filename.setText("");
+                    blockInput(testStates.TEST_PARAMETER_LOAD);
+                    testLoadSuccess = false;
                 }
 
             }
+            if (frame.getInputPanel().selfSustainedTestSelection.isSelected() && testLoadSuccess) {
+                try {
+                    getController().selectSelfSustainedMode();
+                    blockInput(testStates.TEST_PARAMETER_READY);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    alert(e.getMessage());
+                    testLoadSuccess = false;
+                    blockInput(testStates.TEST_PARAMETER_LOAD);
+                }
+            }
+            // blockInput(testStates.TEST_RUNNING);
+            // alert(PRE_START_WARNING);
+
+            if (testLoadSuccess) {
+                try {
+
+                    getController().executeQueuedCommands();
+                } catch (Exception e) {
+
+                    alert(e.getMessage());
+                    getController().dismissQueuedCommands();
+                    blockInput(testStates.TEST_PARAMETER_LOAD);
+                }
+            }
+        }
+
+        private void handleSelfSustainedFileImport() {
+            JFileChooser c = new JFileChooser();
+            // Demonstrate "Open" dialog:
+            int rVal = c.showOpenDialog(Views.this.frame);
+            if (rVal == JFileChooser.APPROVE_OPTION) {
+                frame.getInputPanel().DUTFilename.setText(c.getSelectedFile().getName());
+                String dir = c.getCurrentDirectory().toString();
+                String path = dir + "\\" + frame.getInputPanel().DUTFilename.getText();
+
+                getController().createSpeedTimeFromCSV(path);
+                plotSpeedTime();
+            }
+            if (rVal == JFileChooser.CANCEL_OPTION) {
+                frame.getInputPanel().filename.setText("");
+            }
+        }
+
+        private void handleStartCommand() {
+            System.err.println("estoy en iniciar");
+            frame.inputPanel.measurementsPanel.setVisible(true);
+            getController().startMeasurements();
+            plotUpdater.execute();
+            frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
+
+            try {
+                getController().start();
+                blockInput(testStates.TEST_RUNNING);
+            } catch (Exception e) {
+                System.err.println("Tire error");
+                blockInput(testStates.TEST_PARAMETER_READY);
+                System.err.println(e.getMessage());
+                alert(e.getMessage());
+            } // TODO Agregar lógica de inicio de ensayo
+
+        }
+
+        private void handleResumeCommand() {
+            System.err.println("estoy en reanudar");
+            frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
+
+            try {
+                getController().start();
+                blockInput(testStates.TEST_RUNNING);
+            } catch (Exception e) {
+                System.err.println("Tire error");
+                blockInput(testStates.TEST_PARAMETER_READY);
+                System.err.println(e.getMessage());
+                alert(e.getMessage());
+            } // TODO Agregar lógica de inicio de ensayo
+
+        }
+
+        private void handleSelfSustainedSelection() {
+            if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
+                alert(SELF_SUSTAINED_MODE_WARNING);
+                selfSustaintedFrame.setVisible(true);
+                frame.getInputPanel().DUTFilename.setVisible(true);
+                frame.getInputPanel().openDUTFileButton.setVisible(true);
+                createSelfSustainedChart();
+            } else {
+                selfSustaintedFrame.setVisible(false);
+                frame.getInputPanel().DUTFilename.setVisible(false);
+                frame.getInputPanel().openDUTFileButton.setVisible(false);
+
+            }
+        }
+
+        private void handlePauseCommand() {
+            frame.getInputPanel().startButton.setText(START_BUTTON_LABEL);
+            try {
+                getController().stop();
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                alert(e.getMessage());
+                frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
+
+            }
+
+        }
+
+        private void handlePowerOnCommand() {
+            System.err.println("estoy en potencia");
+
+            try {
+
+                getController().powerOn();
+                blockInput(testStates.POWER_CONNECTED);
+
+            } catch (Exception e) {
+                System.err.println("Tire error");
+
+                System.err.println(e.getMessage());
+                alert(e.getMessage());
+                blockInput(testStates.PLC_CONNECTED);
+            }
+
+        }
+
+        private void handleEmergencyCommand() {
+            System.err.println("estoy en EMG Stop");
+            try {
+                getController().emergencyStop();
+            } catch (Exception e) {
+                alert(e.getMessage());
+            }
+        }
+
+        private void handleShutdownCommand() {
+            getController().stopMeasurements();
+            System.err.println("estoy en apagar");
+            plotUpdater.cancel(true);
+            try {
+
+                getController().powerOff();
+                getController().PLCStop();
+                blockInput(testStates.TEST_END);
+            } catch (Exception e) {
+                System.err.println("Tire error");
+
+                System.err.println(e.getMessage());
+                alert(e.getMessage());
+                // blockInput(testStates.TEST_RUNNING);
+                blockInput(testStates.TEST_END);
+
+            }
+
+        }
+
+        private void handleConnectCommand() {
+
+            String url = getTargetIP();
+            System.err.println(url);
+            try {
+
+                getController().connect(url);
+                Thread.sleep(1000);
+                getController().PLCStart();
+                blockInput(testStates.PLC_CONNECTED);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                alert(e.getMessage());
+
+                // blockInput(testStates.PLC_CONNECTED);
+                blockInput(testStates.INITIAL);
+            }
+        }
+
+        private void handleTorqueTimeFileInput() {
+            JFileChooser c = new JFileChooser();
+            // Demonstrate "Open" dialog:
+            int rVal = c.showOpenDialog(Views.this.frame);
+            if (rVal == JFileChooser.APPROVE_OPTION) {
+                frame.getInputPanel().filename.setText(c.getSelectedFile().getName());
+                String dir = c.getCurrentDirectory().toString();
+                String path = dir + "\\" + frame.getInputPanel().filename.getText();
+
+                getController().createTorqueTimeFromCSV(path);
+                plotTorqueTime();
+            }
+            if (rVal == JFileChooser.CANCEL_OPTION) {
+                frame.getInputPanel().filename.setText("");
+            }
+        }
+
+        private void handleFileOutput() {
+            String pattern = "yyyyMMdd HHmmss";
+            DateFormat df = new SimpleDateFormat(pattern);
+            Date today = Calendar.getInstance().getTime();
+            String todayAsString = df.format(today);
+            storeDataSet(CSV_FILEPATH + todayAsString);
         }
     }
 

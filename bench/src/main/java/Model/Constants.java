@@ -39,9 +39,9 @@ public final class Constants {
     public enum serverSideTestStatus {
         RUNNING("CORRIENDO",Color.YELLOW),
         STOPPED("PARADO",Color.ORANGE),
-        ENDED("FIN",Color.GRAY),
+        ENDED("FINALIZADO",Color.GRAY),
         NOT_STARTED("NO INICIADO",Color.GRAY),
-        EMERGENCY_STOP("EMG",Color.RED, "Sistema en emergencia"),
+        EMERGENCY_STOP("EMERGENCIA",Color.RED, "Sistema en emergencia"),
         READY_TO_START("LISTO",Color.GRAY);
 
         String stateName;
@@ -63,6 +63,10 @@ public final class Constants {
         public String getResponseMessage()
         {
             return this.responseMessage;
+        }
+        public String getName()
+        {
+            return this.stateName;
         }
 
     }
@@ -112,6 +116,7 @@ public final class Constants {
     public static final String MEASURED_SIMULATOR_POWER = "unit/ladder.ACTUAL_ACTIVE_POWER"; // Kw
     public static final String MEASURED_SIMULATOR_CURRENT = "unit/ladder.ACTUAL_ABSOLUTE_CURRENT"; // Kw
     
+    public static final String DUT_AXIS_ENABLE = "glob/DUT_ENABLE";// RPM
     public static final String MEASURED_DUT_SPEED = "glob/ACTUAL_DUT_SPEED_RPM";// RPM
     public static final String MEASURED_DUT_TORQUE = "glob/ACTUAL_DUT_MEASURED_TORQUE";// Nm
     public static final String MEASURED_DUT_VOLTAGE = "glob/ACTUAL_DUT_OUTPUT_VOLTAGE";// Vrms
