@@ -27,8 +27,8 @@ public final class Constants {
     public static final String READ_CSV="Importar CSV";
     // Se indexa como string glob/TORQUE_VALUES[0],glob/TORQUE_VALUES[1]...
     public static final String AVAILABLE_TORQUE_MODES[]={"Cupla en función del tiempo","Cupla en función de la velocidad"};
-    //public static final String DEFAULT_SERVER_ADDRESS = "http://192.168.214.1/soap/opcxml/";
-    public static final String DEFAULT_SERVER_ADDRESS = "http://169.254.11.22/soap/opcxml";
+    public static final String DEFAULT_SERVER_ADDRESS = "http://192.168.214.1/soap/opcxml/";
+    //public static final String DEFAULT_SERVER_ADDRESS = "http://169.254.11.22/soap/opcxml";
 
     public static final String SELF_SUSTAINED_MODE_WARNING="Se seleccionó el modo de ensayo autocontenido. En este modo, ambos ejes conectados al banco están habilitados para realizar movimiento. Verifique que ningún objeto esté en la cercanía de los ejes. No desatienda el equipo, esté preparado para accionar el botón de emergencia desde el control de operador. Evite accidentes";
     public static final String PRE_START_WARNING="Al seleccionar '"+ START_BUTTON_LABEL+ "' el movimiento comenzará. Verifique que ningún objeto esté en la cercanía de los ejes. No desatienda el equipo, esté preparado para accionar el botón de emergencia desde el control de operador. Evite accidentes";

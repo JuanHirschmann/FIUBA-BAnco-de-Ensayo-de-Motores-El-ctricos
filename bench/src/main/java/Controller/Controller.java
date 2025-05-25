@@ -151,7 +151,7 @@ public class Controller {
             // measuredVars.add(commands.DUT_SPEED);
         }
         //Este tiempo de actualización tiene que ser menor al de la actualización del gráfico. 
-        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 200, TimeUnit.MILLISECONDS);
+        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 100, TimeUnit.MILLISECONDS);
         
     }
 
@@ -331,7 +331,7 @@ public class Controller {
         if (model.isConnected()) {
             Float last_timestamp = Float
                 .valueOf(this.torqueTimeValues.getTimestamp(this.torqueTimeValues.length() - 1));
-            bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 1000, 1000, TimeUnit.MILLISECONDS);
+            bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 100, 1000, TimeUnit.MILLISECONDS);
             model.selectTorqueVsTime(true);
             int last_timestamp_as_int = last_timestamp.intValue();
             System.out.print("ÚLTIMO TIMESTAMP");
@@ -371,7 +371,7 @@ public class Controller {
                     .valueOf(this.torqueTimeValues.getTimestamp(this.torqueTimeValues.length() - 1));
             int last_timestamp_as_int = last_timestamp.intValue();
             model.setTestEndTime(String.valueOf(last_timestamp_as_int),true);
-            bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 1000, 1000, TimeUnit.MILLISECONDS);
+            bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 100, 1000, TimeUnit.MILLISECONDS);
             model.selectMixedTest(true);
 
             System.out.print("ÚLTIMO TIMESTAMP");
@@ -400,7 +400,7 @@ public class Controller {
         }
         if (model.isConnected() && checkSuccess) {
             model.enableDUTAxis(true);
-            DUTBufferTimer.scheduleAtFixedRate(new sendSpeedCommands(), 1000, 1000, TimeUnit.MILLISECONDS);
+            DUTBufferTimer.scheduleAtFixedRate(new sendSpeedCommands(), 200, 1000, TimeUnit.MILLISECONDS);
         } else {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
@@ -510,7 +510,7 @@ public class Controller {
                                 Float.valueOf(this.measurement.get(varNames.get(i))),
                                 timestamp - delay / 2);
                     }
-                    System.err.println(delay);
+                    //System.err.println(delay);
                 } else {
                     System.out.println("Falla en medición");
 

@@ -74,6 +74,7 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYSplineRenderer;
 import org.jfree.data.UnknownKeyException;
+import org.jfree.data.time.Millisecond;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -174,7 +175,7 @@ public class Views implements ViewListener {
                     publish(buffer);
                     getController().clearMeasurementBuffer();
                     try {
-                        Thread.sleep(400);
+                        Thread.sleep(300);
                     } catch (InterruptedException e) {
                         // eat it. caught when interrupt is called
                         System.out.println("MySwingWorker shut down.");
@@ -226,8 +227,8 @@ public class Views implements ViewListener {
                         }
                         // TODO: Esto a veces rompe el worker
                         for (int i = 0; i < sampleSize; i++) {
-                            accumValue += 0;/* mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
-                                    .floatValue(); */
+                            accumValue +=  mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
+                                    .floatValue(); 
                         }
 
                         frame.getInputPanel().displayedMeasurements.addMeasurement(series,
@@ -963,7 +964,7 @@ public class Views implements ViewListener {
 
             if (testLoadSuccess) {
                 try {
-
+                    Thread.sleep(150);
                     getController().executeQueuedCommands();
                 } catch (Exception e) {
 
@@ -1109,7 +1110,7 @@ public class Views implements ViewListener {
             try {
 
                 getController().connect(url);
-                Thread.sleep(1000);
+                Thread.sleep(200);
                 getController().PLCStart();
                 blockInput(testStates.PLC_CONNECTED);
             } catch (Exception e) {
