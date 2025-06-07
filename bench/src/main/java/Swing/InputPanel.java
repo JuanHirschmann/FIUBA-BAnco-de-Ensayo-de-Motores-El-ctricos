@@ -11,12 +11,8 @@ import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
 import static Views.Constants.WRITE_CSV;
-
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -29,11 +25,9 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.EmptyBorder;
 
 import Model.Constants.commands;
 import Model.Constants.testTypes;
-import Views.Constants.testStates;
 
 public class InputPanel extends JPanel {
     public StatusPanel statusPanel=new StatusPanel();
@@ -45,7 +39,7 @@ public class InputPanel extends JPanel {
     public JButton powerOnButton = new JButton(POWER_ON_BUTTON_LABEL);// Activa el modulo activo de linea y el eje
     public JButton emergencyButton = new JButton(EMERGENCY_STOP_BUTTON_LABEL); // Freno de emergencia
     public JButton buttonConnect = new JButton(CONNECT_BUTTON_LABEL);// Conecta a la IP objetivo
-    public JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo TODO
+    public JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo
     public JButton shutdownButton = new JButton(SHUTDOWN_BUTTON_LABEL);
     public LabeledInput targetIP= new LabeledInput("IP objetivo: ");
     
@@ -166,7 +160,6 @@ public class InputPanel extends JPanel {
         String B;
         String C;
         String D;
-        String E;
 
         TorqueEquation() {
             this.reset();
@@ -182,7 +175,6 @@ public class InputPanel extends JPanel {
             B = "B";
             C = "C";
             D = "D";
-            E = "E";
         }
     }
 }

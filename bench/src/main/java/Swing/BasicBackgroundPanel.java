@@ -1,6 +1,5 @@
+package Swing;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Image;
 
 import javax.swing.JPanel;

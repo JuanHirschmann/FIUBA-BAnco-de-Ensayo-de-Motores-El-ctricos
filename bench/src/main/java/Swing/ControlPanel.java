@@ -1,6 +1,4 @@
 package Swing;
-
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 
 import javax.swing.JPanel;

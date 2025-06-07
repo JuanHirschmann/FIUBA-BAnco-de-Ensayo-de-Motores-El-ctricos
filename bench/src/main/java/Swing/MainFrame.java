@@ -1,20 +1,16 @@
 package Swing;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.renderer.AbstractRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 
 public class MainFrame extends JFrame{
     
@@ -36,7 +32,7 @@ public class MainFrame extends JFrame{
         }
         setSize(1200,800);
         setLocation(0,0);
-        setTitle("Banco de ensayo - FIUBA");
+        setTitle("SCDin - Simulador de Carga Dinámica");
         setLayout(new BorderLayout(0,0));
         setVisible(true);
         add(inputPanel,BorderLayout.NORTH);

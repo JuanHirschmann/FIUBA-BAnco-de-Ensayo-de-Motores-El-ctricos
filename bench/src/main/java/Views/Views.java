@@ -1,16 +1,11 @@
 package Views;
 
-import static Model.Constants.SOFTWARE_STOP_BUTTON;
-import static Views.Constants.AVAILABLE_TORQUE_MODES;
 import static Views.Constants.BROWSE_FILE_BUTTON_LABEL;
 import static Views.Constants.CONNECT_BUTTON_LABEL;
-import static Views.Constants.CSV_DELIMITER;
 import static Views.Constants.CSV_FILEPATH;
-import static Views.Constants.EMERGENCY_RELEASE_BUTTON_LABEL;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
 import static Views.Constants.PAUSE_BUTTON_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
-import static Views.Constants.PRE_START_WARNING;
 import static Views.Constants.SELF_SUSTAINED_MODE_WARNING;
 import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
@@ -21,36 +16,13 @@ import static Views.Constants.SELF_SUSTAINED_TEST_LABEL;
 import static Views.Constants.RESUME_BUTTON_LABEL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.EventQueue;
-import java.awt.Shape;
-import java.awt.desktop.PrintFilesEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.awt.geom.Ellipse2D;
-
-import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SpinnerModel;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingWorker;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -58,7 +30,6 @@ import javax.swing.JFileChooser;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -70,11 +41,7 @@ import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.renderer.xy.XYSplineRenderer;
-import org.jfree.data.UnknownKeyException;
-import org.jfree.data.time.Millisecond;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -87,19 +54,13 @@ import Swing.TorqueEquationParameter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.security.KeyException;
-import java.io.FileReader;
 import java.io.BufferedWriter;
-import java.io.BufferedReader;
-import org.scilab.forge.jlatexmath.TeXFormula;
-
 import Controller.Controller;
 import Controller.MeasurementBuffer;
 import Controller.TorqueTimeValues;
 import Controller.ViewListener;
 import Model.Constants.commands;
 import Model.Constants.serverSideTestStatus;
-import Model.Constants.testStatus;
 
 public class Views implements ViewListener {
 
@@ -175,7 +136,7 @@ public class Views implements ViewListener {
                     publish(buffer);
                     getController().clearMeasurementBuffer();
                     try {
-                        Thread.sleep(300);
+                        Thread.sleep(500);
                     } catch (InterruptedException e) {
                         // eat it. caught when interrupt is called
                         System.out.println("MySwingWorker shut down.");
@@ -996,6 +957,13 @@ public class Views implements ViewListener {
             System.err.println("estoy en iniciar");
             frame.inputPanel.measurementsPanel.setVisible(true);
             getController().startMeasurements();
+            try
+            {
+                Thread.sleep(500);
+            }
+            catch(Exception e)
+            {
+            }
             plotUpdater.execute();
             frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
 

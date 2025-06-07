@@ -1,6 +1,5 @@
 package Swing;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -31,7 +30,7 @@ public class SelfSustainedTestFrame extends JFrame{
         }
         setSize(1200,800);
         setLocation(0,0);
-        setTitle("Banco de ensayo - FIUBA");
+        setTitle("SCDin - Simulador de Carga Dinámica");
         setLayout(new BorderLayout(0,0));
         setVisible(false);
         

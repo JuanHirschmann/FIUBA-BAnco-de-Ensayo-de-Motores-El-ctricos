@@ -3,8 +3,6 @@ package Controller;
 import Model.Constants.commands;
 import Model.Constants.serverSideTestError;
 import Model.Constants.serverSideTestStatus;
-import Model.Constants.testStatus;
-import Model.Constants.testTypes;
 import Swing.TorqueEquationParameter;
 import Model.Model;
 import Views.Views;
@@ -12,25 +10,17 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-
-import static Model.Constants.AXIS_ENABLED_SIGNAL;
-import static Model.Constants.CURRENT_ERROR;
 import static Model.Constants.DUT_SAVE_TO_BUFFER;
 import static Model.Constants.DUT_SPEED_TIME_VALUES;
 import static Model.Constants.DUT_TIMESTAMP;
 import static Model.Constants.MAX_CHUNK_SIZE;
 import static Model.Constants.SAVE_TO_BUFFER;
-import static Model.Constants.TEST_STATUS;
 import static Model.Constants.TIMESTAMP;
 import static Model.Constants.TORQUE_TIME_BUFFER_SIZE;
 import static Model.Constants.TORQUE_TIME_VALUES;
 import static Model.Constants.VAR_PATH;
 
-import java.lang.Math;
 import java.net.ConnectException;
-import java.text.NumberFormat;
-import java.util.concurrent.Exchanger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -151,7 +141,7 @@ public class Controller {
             // measuredVars.add(commands.DUT_SPEED);
         }
         //Este tiempo de actualización tiene que ser menor al de la actualización del gráfico. 
-        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 100, TimeUnit.MILLISECONDS);
+        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 150, TimeUnit.MILLISECONDS);
         
     }
 
@@ -363,7 +353,7 @@ public class Controller {
      * @throws Exception
      */
     public void selectMixedTest() throws ConnectException {
-        // TODO: SACAR EL !
+        
         if (model.isConnected()) {
             this.torqueTimeValues.torqueCommandCheck();
             // Initial delay to avoid stepping on model.setTestEndTime
@@ -414,7 +404,7 @@ public class Controller {
      * @throws Exception
      */
     public void setTorqueVsSpeedParameters(Map<String, TorqueEquationParameter> parameters) throws ConnectException {
-        // TODO: SACAR EL !
+
         if (model.isConnected()) {
             model.setTorqueVsSpeedParameters(parameters);
             view.updateLoadedTestStatus(true);
@@ -456,7 +446,7 @@ public class Controller {
 
     }
 
-    // TODO: Agregar el TORQUE_COMMAND
+    
     /*
      * Implements the update of measurments on to a measurement
      * buffer.
@@ -529,7 +519,7 @@ public class Controller {
      * Implements the update of keepalive variable.
      */
     private class lowPriorityUpdate implements Runnable {
-        List<String> updateVarsName= new ArrayList<String>();
+        /* List<String> updateVarsName= new ArrayList<String>(); */
         lowPriorityUpdate() {
             //updateVarsName.add(AXIS_ENABLED_SIGNAL);
             //updateVarsName.add(TEST_STATUS);
