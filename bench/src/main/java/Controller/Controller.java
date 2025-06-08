@@ -21,6 +21,7 @@ import static Model.Constants.TORQUE_TIME_VALUES;
 import static Model.Constants.VAR_PATH;
 
 import java.net.ConnectException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,7 @@ public class Controller {
     private TorqueTimeValues torqueTimeValues = new TorqueTimeValues();
     private TorqueTimeValues speedTimeValues = new TorqueTimeValues();
 
+    ExecutorService measurementExecutor =Executors.newFixedThreadPool(20);
     ScheduledExecutorService torqueTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService bufferTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService DUTBufferTimer = Executors.newScheduledThreadPool(10);
@@ -50,9 +52,8 @@ public class Controller {
      */
     public void setTestEndTime(String endtime_ms) throws ConnectException {
         if (model.isConnected()) {
-            model.setTestEndTime(endtime_ms,true);
-        }else
-        {
+            model.setTestEndTime(endtime_ms, true);
+        } else {
             throw new ConnectException();
         }
     }
@@ -122,7 +123,7 @@ public class Controller {
      * starts the measurements for variables at a fixed rate
      */
     public void startMeasurements() {
-        
+
         System.err.println("empece a medir");
         List<commands> measuredVars = new ArrayList<commands>();
         measuredVars.add(commands.TORQUE);
@@ -140,9 +141,10 @@ public class Controller {
             measuredVars.add(commands.DUT_POWER);
             // measuredVars.add(commands.DUT_SPEED);
         }
-        //Este tiempo de actualización tiene que ser menor al de la actualización del gráfico. 
+        // Este tiempo de actualización tiene que ser menor al de la actualización del
+        // gráfico.
         torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 150, TimeUnit.MILLISECONDS);
-        
+
     }
 
     /*
@@ -320,13 +322,13 @@ public class Controller {
     public void selectTorqueVsTime() throws ConnectException {
         if (model.isConnected()) {
             Float last_timestamp = Float
-                .valueOf(this.torqueTimeValues.getTimestamp(this.torqueTimeValues.length() - 1));
+                    .valueOf(this.torqueTimeValues.getTimestamp(this.torqueTimeValues.length() - 1));
             bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 100, 1000, TimeUnit.MILLISECONDS);
             model.selectTorqueVsTime(true);
             int last_timestamp_as_int = last_timestamp.intValue();
             System.out.print("ÚLTIMO TIMESTAMP");
             System.out.println(last_timestamp_as_int);
-            model.setTestEndTime(String.valueOf(last_timestamp_as_int),true);
+            model.setTestEndTime(String.valueOf(last_timestamp_as_int), true);
         } else {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
@@ -353,14 +355,14 @@ public class Controller {
      * @throws Exception
      */
     public void selectMixedTest() throws ConnectException {
-        
+
         if (model.isConnected()) {
             this.torqueTimeValues.torqueCommandCheck();
             // Initial delay to avoid stepping on model.setTestEndTime
             Float last_timestamp = Float
                     .valueOf(this.torqueTimeValues.getTimestamp(this.torqueTimeValues.length() - 1));
             int last_timestamp_as_int = last_timestamp.intValue();
-            model.setTestEndTime(String.valueOf(last_timestamp_as_int),true);
+            model.setTestEndTime(String.valueOf(last_timestamp_as_int), true);
             bufferTimer.scheduleAtFixedRate(new sendTorqueCommands(), 100, 1000, TimeUnit.MILLISECONDS);
             model.selectMixedTest(true);
 
@@ -378,14 +380,12 @@ public class Controller {
      * @throws Exception
      */
     public void selectSelfSustainedMode() throws Exception {
-        boolean checkSuccess=true;
-        try
-        {
+        boolean checkSuccess = true;
+        try {
 
             this.speedTimeValues.speedCommandCheck();
-        }catch(Exception e)
-        {
-            checkSuccess=false;
+        } catch (Exception e) {
+            checkSuccess = false;
             throw e;
         }
         if (model.isConnected() && checkSuccess) {
@@ -413,14 +413,15 @@ public class Controller {
             throw new ConnectException("El control no está conectado. Verifique la configuración IP");
         }
     }
-    public void dismissQueuedCommands()
-    {
+
+    public void dismissQueuedCommands() {
         this.model.clearWriteQueue();
     }
-    public void executeQueuedCommands() throws ConnectException
-    {
+
+    public void executeQueuedCommands() throws ConnectException {
         this.model.executeWriteQueue();
     }
+
     /*
      * Checks if model is connected
      */
@@ -438,7 +439,7 @@ public class Controller {
 
     private void handleTestError(serverSideTestError testError) {
 
-       // view.updateTestStatus(testError);
+        // view.updateTestStatus(testError);
         if (testError != serverSideTestError.NO_ERROR) {
             view.alert(testError.getResponseMessage());
 
@@ -446,7 +447,6 @@ public class Controller {
 
     }
 
-    
     /*
      * Implements the update of measurments on to a measurement
      * buffer.
@@ -459,8 +459,10 @@ public class Controller {
         private long delay;
 
         updateMeasurements(List<commands> command) {
+            measurementExecutor.submit(() -> {
 
-            this.command.addAll(command);
+                this.command.addAll(command);
+            });
         };
 
         public void run() {
@@ -500,7 +502,7 @@ public class Controller {
                                 Float.valueOf(this.measurement.get(varNames.get(i))),
                                 timestamp - delay / 2);
                     }
-                    //System.err.println(delay);
+                    // System.err.println(delay);
                 } else {
                     System.out.println("Falla en medición");
 
@@ -521,9 +523,9 @@ public class Controller {
     private class lowPriorityUpdate implements Runnable {
         /* List<String> updateVarsName= new ArrayList<String>(); */
         lowPriorityUpdate() {
-            //updateVarsName.add(AXIS_ENABLED_SIGNAL);
-            //updateVarsName.add(TEST_STATUS);
-            //updateVarsName.add(CURRENT_ERROR);
+            // updateVarsName.add(AXIS_ENABLED_SIGNAL);
+            // updateVarsName.add(TEST_STATUS);
+            // updateVarsName.add(CURRENT_ERROR);
         };
 
         public void run() {
@@ -531,8 +533,8 @@ public class Controller {
             try {
                 if (model.isConnected()) {
                     model.writeVar("FALSE", "SIMOTION", "glob/KEEPALIVE");
-                    
-                    //model.readVars(VAR_PATH, null);
+
+                    // model.readVars(VAR_PATH, null);
                     view.updateConnectionStatus(true);
                     view.updateALMStatus(model.ALM_is_active());
                     serverSideTestStatus testStatus = model.getTestStatus();
