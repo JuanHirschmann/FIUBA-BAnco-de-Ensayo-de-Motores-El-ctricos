@@ -45,18 +45,18 @@ public class InputPanel extends JPanel {
     
     //Variables panel
     public LabeledInput stopTime = new LabeledInput("Tiempo de fin [ms]:");
-    public JTextField filename = new JTextField(10);
+    public JTextField filename = new JTextField(15);
     public JButton setParametersButton = new JButton(SET_TEST_PARAMETERS_BUTTON_LABEL);
     public JButton saveCSVButton = new JButton(WRITE_CSV);
     public JButton openFileButton = new JButton(BROWSE_FILE_BUTTON_LABEL);
     public JComboBox<testTypes> torqueTestModeComboBox = new JComboBox<testTypes>();
     public TorqueEquation torqueEquationText = new TorqueEquation();
-    public ImageIcon equationIcon= new ImageIcon("C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\Codigo\\Pruebas OPC V\\bench\\src\\main\\resources\\equation.png");
+    public ImageIcon equationIcon= new ImageIcon("src\\main\\resources\\equation.png");
     
     public JLabel torqueEquation = new JLabel(equationIcon);
     public TorqueEquationParameters torqueEquationParameters = new TorqueEquationParameters();
     public JLabel testPeriodLabel = new JLabel("Cantidad de periodos a ensayar");
-    public SpinnerModel numericModel = new SpinnerNumberModel(1, 1, 99, 1);
+    public SpinnerModel numericModel = new SpinnerNumberModel(1, 1, 199, 1);
     public JSpinner testPeriodsSpinner = new JSpinner(numericModel);
     public JLabel itemsLoadedLabel = new JLabel("");
     public StatusLight powerOnIndicator=new StatusLight("POTENCIA");
@@ -86,21 +86,26 @@ public class InputPanel extends JPanel {
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_TIME);
         this.torqueTestModeComboBox.addItem(testTypes.TORQUE_VS_SPEED);
         this.torqueTestModeComboBox.addItem(testTypes.MIXED_TEST);
-        variablesPanel.add(torqueTestModeComboBox);
-        variablesPanel.add(openFileButton);
-        variablesPanel.add(filename);
-        variablesPanel.add(itemsLoadedLabel);
-        variablesPanel.add(torqueEquation);
+        //Top variables panel - Common to all test & Torque-time specific
+        variablesPanel.add(torqueTestModeComboBox,0);
+        variablesPanel.add(openFileButton,0);
+        variablesPanel.add(filename,0);
+        variablesPanel.add(itemsLoadedLabel,0);
+        variablesPanel.add(setParametersButton,0);
+        variablesPanel.add(saveCSVButton,0);
+        variablesPanel.add(testPeriodLabel,0);
+        variablesPanel.add(testPeriodsSpinner,0);
+        variablesPanel.add(selfSustainedTestSelection,2);
+        //Middle variables panel - Torque-speed specific
+        
+        variablesPanel.add(torqueEquation,1);
         torqueEquationParameters.setParameters(variablesPanel);
-        variablesPanel.add(testPeriodLabel);
-        variablesPanel.add(testPeriodsSpinner);
         stopTime.set(variablesPanel);
-        variablesPanel.add(selfSustainedTestSelection);
-        variablesPanel.add(openDUTFileButton);
-        variablesPanel.add(DUTFilename);
+        //Bottom panel - Selfsustained specific
+        
+        variablesPanel.add(openDUTFileButton,2);
+        variablesPanel.add(DUTFilename,2);
         openDUTFileButton.setVisible(false);
-        variablesPanel.add(setParametersButton);
-        variablesPanel.add(saveCSVButton);
         DUTFilename.setVisible(false);
         
         
@@ -127,6 +132,7 @@ public class InputPanel extends JPanel {
         gbc.gridheight=1;
         gbc.gridwidth=2;
         gbc.weightx=0.5;
+        gbc.weighty=1;
         gbc.fill=GridBagConstraints.BOTH;
         //gbc.insets = new Insets(3,10,3,10);
         
@@ -136,6 +142,7 @@ public class InputPanel extends JPanel {
         gbc.gridheight=1;
         gbc.gridwidth=1;
         gbc.weightx=0.5;
+        gbc.weighty=1;
         gbc.fill=GridBagConstraints.BOTH;
         add(controlPanel,gbc);
         gbc.gridx=0;
@@ -143,16 +150,11 @@ public class InputPanel extends JPanel {
         gbc.gridheight=2;
         gbc.gridwidth=3;
         gbc.weightx=0.5;
+        gbc.weighty=1;
         gbc.fill=GridBagConstraints.BOTH;
         add(variablesPanel,gbc);
-        
-        gbc.gridx=0;
-        gbc.gridy=3;
-        gbc.gridheight=1;
-        gbc.gridwidth=3;
-        gbc.weightx=0.5;
-        gbc.fill=GridBagConstraints.VERTICAL;
-        add(measurementsPanel,gbc);
+    
+        variablesPanel.add(measurementsPanel,2);
         
     }
     private class TorqueEquation {

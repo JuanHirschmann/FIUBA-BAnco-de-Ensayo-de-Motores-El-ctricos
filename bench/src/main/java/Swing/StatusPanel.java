@@ -16,8 +16,8 @@ public class StatusPanel extends JPanel {
         this.setBorder(new EmptyBorder(5, 5, 5, 5));
         this.setLayout( new GridLayout(1,4,0,0));
         try{
-            background=ImageIO.read(new File("C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\Codigo\\Pruebas OPC V\\bench\\src\\main\\resources\\danger_texture.jpg"));
-                
+            background=ImageIO.read(new File("src\\main\\resources\\danger_texture.jpg"));
+                 
             }catch (Exception e)
             {
                 System.out.println("no encontre");

@@ -33,7 +33,7 @@ public final class Constants {
     public static final String SELF_SUSTAINED_MODE_WARNING="Se seleccionó el modo de ensayo autocontenido. En este modo, ambos ejes conectados al banco están habilitados para realizar movimiento. Verifique que ningún objeto esté en la cercanía de los ejes. No desatienda el equipo, esté preparado para accionar el botón de emergencia desde el control de operador. Evite accidentes";
     public static final String PRE_START_WARNING="Al seleccionar '"+ START_BUTTON_LABEL+ "' el movimiento comenzará. Verifique que ningún objeto esté en la cercanía de los ejes. No desatienda el equipo, esté preparado para accionar el botón de emergencia desde el control de operador. Evite accidentes";
     
-    public static final String CSV_FILEPATH="C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\";
+    public static final String CSV_FILEPATH="Test output/";
     public enum testStates {
         INITIAL(),
         PLC_CONNECTED(),

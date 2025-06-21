@@ -1,0 +1,41 @@
+Aplicación
+    Mejorar layout (OK)
+        Se separa etiqueta con campo de texto. Arreglar (OK)
+        Tamaño de los campos de texto. (OK)
+    Rutas relativas (OK)
+    Documentación
+    Ver como instalar en otras máquinas 
+    Limpiar lo que no se usa (OK)
+    Que el programa corte cuando se cierra la ventana (OK)
+    Arreglar itemsLoaded
+    File lock (OK)
+        Se rompe cuando crashea la aplicación.
+    Desharcodear
+    Logger, ver si tengo ganas
+PLC
+    Ver como reiniciar y terminar un ensayo
+    Mejorar un poco el filtro y repetir pruebas
+        Escalón todas variables
+        SAE 
+        US06
+    Verificar alarmas por exceso de cupla y derivada de cupla
+    Limpiar y organizar código
+        Nomenclatura
+        Estructuras
+    Corregir comportamiento en emergencia cuando el ensayo no está autocontenido
+    Corregir algoritmo de torque-tiempo para que acepte consignas de 100ms (se traba con consignas peques)
+    Corregir cupla cuando se cargan los parámetros y no se inicia el ensayo
+    Corregir fin de ensayo cuando se agota un buffer. 
+    Duración máxima de ensayo
+Tesis
+    Agregar correcciones de Alejandro/Jorge 
+    Actualizar gráficos si es necesario
+    Spellcheck
+Manual
+    Agregar correcciones de Alejandro
+        Máquina de estados 
+        Inicio / freno de ensayo
+        Estados del semáforo
+Presentación
+    Armar estructura
+

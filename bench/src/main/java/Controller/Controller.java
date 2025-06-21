@@ -143,7 +143,7 @@ public class Controller {
         }
         // Este tiempo de actualización tiene que ser menor al de la actualización del
         // gráfico.
-        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 150, TimeUnit.MILLISECONDS);
+        torqueTimer.scheduleAtFixedRate(new updateMeasurements(measuredVars), 0, 100, TimeUnit.MILLISECONDS);
 
     }
 
@@ -635,7 +635,6 @@ public class Controller {
 
     }
 
-    // TODO: ACTUALIZAR CARGA DE COMANDOS DE VELOCIDAD
     private class sendSpeedCommands implements Runnable {
         private int totalItemsLoadedOnBuffer = 0;
         private boolean allDataLoaded = false;

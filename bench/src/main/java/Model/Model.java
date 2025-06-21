@@ -29,7 +29,6 @@ import static Model.Constants.CLEAR_TO_RECEIVE;
 import static Model.Constants.TEST_STATUS;
 import static Model.Constants.DUT_AXIS_ENABLE;
 
-import org.apache.log4j.varia.StringMatchFilter;
 import org.opcfoundation.webservices.XMLDA._1_0.ItemValue;
 import Model.Constants.serverSideTestError;
 import Model.Constants.serverSideTestStatus;
@@ -151,6 +150,7 @@ public class Model {
      * @throws ConnectException Exception thrown when target variable not found or
      *                          server connection wasn't established
      */
+    @SuppressWarnings("unused")
     public String readVar(String varPath, String varName) throws ConnectException {
         String returnVal = new String();
         if (!this.isConnected()) {
@@ -208,6 +208,7 @@ public class Model {
      * @throws ConnectException Exception thrown when target variable not found or
      *                          server connection wasn't established
      */
+    @SuppressWarnings("unused")
     public Map<String, String> readVars(String varPath, List<String> varName) throws ConnectException {
         Map<String, String> returnVal = new Hashtable<String, String>();
         if (!this.isConnected()) {
@@ -552,10 +553,8 @@ public class Model {
      * 
      * @throws ConnectException
      */
-    // TODO: esto tarda una barbaridad y se cuelga. Implementar el reset de Software
-    // stop en PLC
+     // stop en PLC
     public void start() throws ConnectException {
-        // TODO Meter un retardo de 10ms
         writeVar("FALSE", VAR_PATH, SOFTWARE_STOP_BUTTON);
         writeVar("TRUE", VAR_PATH, SOFTWARE_START_BUTTON);
     }
@@ -611,9 +610,7 @@ public class Model {
     public void writeBuffer(List<String> timestamp, List<String> torque) throws Exception {
         System.err.println("write buffer");
         System.err.println(timestamp.size());
-        // TODO: si esta bien implementado, el control mide tiempo decreciente y corta
         for (int i = 0; i < timestamp.size(); i++) {
-            // TODO: Ver bien como se llaman los vectores
             System.err.println(i);
             writeVar(torque.get(i), VAR_PATH, TORQUE_TIME_VALUES + "[" + i + "]");
             writeVar(timestamp.get(i), VAR_PATH, TIMESTAMP + "[" + i + "]");

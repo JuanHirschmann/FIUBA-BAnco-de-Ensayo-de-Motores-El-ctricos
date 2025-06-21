@@ -55,6 +55,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.io.BufferedWriter;
+import java.io.File;
+
 import Controller.Controller;
 import Controller.MeasurementBuffer;
 import Controller.TorqueTimeValues;
@@ -186,10 +188,9 @@ public class Views implements ViewListener {
                         if (seriesLength > MEAN_SAMPLE_SIZE) {
                             sampleSize = MEAN_SAMPLE_SIZE;
                         }
-                        // TODO: Esto a veces rompe el worker
                         for (int i = 0; i < sampleSize; i++) {
-                            accumValue +=  mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
-                                    .floatValue(); 
+                            accumValue += mainDataset.get(series).getSeries(series).getY(seriesLength - i - 1)
+                                    .floatValue();
                         }
 
                         frame.getInputPanel().displayedMeasurements.addMeasurement(series,
@@ -306,7 +307,7 @@ public class Views implements ViewListener {
 
         frame.getInputPanel().selfSustainedTestSelection.addActionListener(new ButtonHandler());
         frame.getInputPanel().openDUTFileButton.addActionListener(new ButtonHandler());
-
+        frame.setDefaultCloseOperation(JDialog.EXIT_ON_CLOSE);
         createChart();
         createSelfSustainedChart();
         this.blockInput(testStates.INITIAL);
@@ -319,77 +320,87 @@ public class Views implements ViewListener {
      * @param currentStep
      */
     private void blockInput(testStates currentStep) {
-        if (currentStep == testStates.INITIAL) {
-            frame.getInputPanel().buttonConnect.setEnabled(true);
-            frame.getInputPanel().powerOnButton.setEnabled(false);
-            frame.getInputPanel().startButton.setEnabled(false);
-            frame.getInputPanel().emergencyButton.setEnabled(false);
-            frame.getInputPanel().shutdownButton.setEnabled(false);
-            frame.getInputPanel().targetIP.setEnabled(true);
+        frame.getInputPanel().buttonConnect.setEnabled(true);
+        frame.getInputPanel().powerOnButton.setEnabled(false);
+        frame.getInputPanel().startButton.setEnabled(true);
+        frame.getInputPanel().emergencyButton.setEnabled(false);
+        frame.getInputPanel().shutdownButton.setEnabled(false);
+        frame.getInputPanel().targetIP.setEnabled(true);
 
-            frame.getInputPanel().variablesPanel.setEnabled(false);
-
-        } else if (currentStep == testStates.PLC_CONNECTED) {
-            frame.getInputPanel().buttonConnect.setEnabled(false);
-            frame.getInputPanel().powerOnButton.setEnabled(true);
-            frame.getInputPanel().startButton.setEnabled(false);
-            frame.getInputPanel().emergencyButton.setEnabled(true);
-            frame.getInputPanel().shutdownButton.setEnabled(false);
-            frame.getInputPanel().targetIP.setEnabled(false);
-
-            frame.getInputPanel().variablesPanel.setEnabled(false);
-        } else if (currentStep == testStates.POWER_CONNECTED) {
-
-            frame.getInputPanel().buttonConnect.setEnabled(false);
-            frame.getInputPanel().powerOnButton.setEnabled(false);
-            frame.getInputPanel().startButton.setEnabled(false);
-            frame.getInputPanel().emergencyButton.setEnabled(true);
-            frame.getInputPanel().shutdownButton.setEnabled(true);
-            frame.getInputPanel().targetIP.setEnabled(false);
-
-            frame.getInputPanel().variablesPanel.setEnabled(true);
-        } else if (currentStep == testStates.TEST_PARAMETER_LOAD) {
-            // Tengo que asegurar que no hayan metido cualquier cosa
-            frame.getInputPanel().buttonConnect.setEnabled(false);
-            frame.getInputPanel().powerOnButton.setEnabled(false);
-            frame.getInputPanel().startButton.setEnabled(false);
-            frame.getInputPanel().emergencyButton.setEnabled(true);
-            frame.getInputPanel().shutdownButton.setEnabled(true);
-            frame.getInputPanel().targetIP.setEnabled(false);
-
-            frame.getInputPanel().variablesPanel.setEnabled(true);
-
-        } else if (currentStep == testStates.TEST_PARAMETER_READY) {
-            frame.getInputPanel().buttonConnect.setEnabled(false);
-            frame.getInputPanel().powerOnButton.setEnabled(false);
-            frame.getInputPanel().startButton.setEnabled(true);
-            frame.getInputPanel().emergencyButton.setEnabled(true);
-            frame.getInputPanel().shutdownButton.setEnabled(true);
-            frame.getInputPanel().targetIP.setEnabled(false);
-
-            frame.getInputPanel().variablesPanel.setEnabled(false);
-
-        } else if (currentStep == testStates.TEST_RUNNING) {
-            frame.getInputPanel().buttonConnect.setEnabled(false);
-            frame.getInputPanel().powerOnButton.setEnabled(false);
-            frame.getInputPanel().startButton.setEnabled(true);
-            frame.getInputPanel().emergencyButton.setEnabled(true);
-            frame.getInputPanel().shutdownButton.setEnabled(true);
-            frame.getInputPanel().targetIP.setEnabled(false);
-
-            frame.getInputPanel().variablesPanel.setEnabled(false);
-
-        } else if (currentStep == testStates.TEST_END) {
-            frame.getInputPanel().buttonConnect.setEnabled(false);
-            frame.getInputPanel().powerOnButton.setEnabled(false);
-            frame.getInputPanel().startButton.setEnabled(true);
-            frame.getInputPanel().emergencyButton.setEnabled(false);
-            frame.getInputPanel().shutdownButton.setEnabled(false);
-            frame.getInputPanel().targetIP.setEnabled(false);
-
-            frame.getInputPanel().variablesPanel.setEnabled(false);
-            frame.getInputPanel().saveCSVButton.setEnabled(true);
-        }
+        frame.getInputPanel().variablesPanel.setEnabled(true);
+        /*
+         * if (currentStep == testStates.INITIAL) {
+         * frame.getInputPanel().buttonConnect.setEnabled(true);
+         * frame.getInputPanel().powerOnButton.setEnabled(false);
+         * frame.getInputPanel().startButton.setEnabled(false);
+         * frame.getInputPanel().emergencyButton.setEnabled(false);
+         * frame.getInputPanel().shutdownButton.setEnabled(false);
+         * frame.getInputPanel().targetIP.setEnabled(true);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(false);
+         * 
+         * } else if (currentStep == testStates.PLC_CONNECTED) {
+         * frame.getInputPanel().buttonConnect.setEnabled(false);
+         * frame.getInputPanel().powerOnButton.setEnabled(true);
+         * frame.getInputPanel().startButton.setEnabled(false);
+         * frame.getInputPanel().emergencyButton.setEnabled(true);
+         * frame.getInputPanel().shutdownButton.setEnabled(false);
+         * frame.getInputPanel().targetIP.setEnabled(false);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(false);
+         * } else if (currentStep == testStates.POWER_CONNECTED) {
+         * 
+         * frame.getInputPanel().buttonConnect.setEnabled(false);
+         * frame.getInputPanel().powerOnButton.setEnabled(false);
+         * frame.getInputPanel().startButton.setEnabled(false);
+         * frame.getInputPanel().emergencyButton.setEnabled(true);
+         * frame.getInputPanel().shutdownButton.setEnabled(true);
+         * frame.getInputPanel().targetIP.setEnabled(false);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(true);
+         * } else if (currentStep == testStates.TEST_PARAMETER_LOAD) {
+         * // Tengo que asegurar que no hayan metido cualquier cosa
+         * frame.getInputPanel().buttonConnect.setEnabled(false);
+         * frame.getInputPanel().powerOnButton.setEnabled(false);
+         * frame.getInputPanel().startButton.setEnabled(false);
+         * frame.getInputPanel().emergencyButton.setEnabled(true);
+         * frame.getInputPanel().shutdownButton.setEnabled(true);
+         * frame.getInputPanel().targetIP.setEnabled(false);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(true);
+         * 
+         * } else if (currentStep == testStates.TEST_PARAMETER_READY) {
+         * frame.getInputPanel().buttonConnect.setEnabled(false);
+         * frame.getInputPanel().powerOnButton.setEnabled(false);
+         * frame.getInputPanel().startButton.setEnabled(true);
+         * frame.getInputPanel().emergencyButton.setEnabled(true);
+         * frame.getInputPanel().shutdownButton.setEnabled(true);
+         * frame.getInputPanel().targetIP.setEnabled(false);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(false);
+         * 
+         * } else if (currentStep == testStates.TEST_RUNNING) {
+         * frame.getInputPanel().buttonConnect.setEnabled(false);
+         * frame.getInputPanel().powerOnButton.setEnabled(false);
+         * frame.getInputPanel().startButton.setEnabled(true);
+         * frame.getInputPanel().emergencyButton.setEnabled(true);
+         * frame.getInputPanel().shutdownButton.setEnabled(true);
+         * frame.getInputPanel().targetIP.setEnabled(false);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(false);
+         * 
+         * } else if (currentStep == testStates.TEST_END) {
+         * frame.getInputPanel().buttonConnect.setEnabled(false);
+         * frame.getInputPanel().powerOnButton.setEnabled(false);
+         * frame.getInputPanel().startButton.setEnabled(true);
+         * frame.getInputPanel().emergencyButton.setEnabled(false);
+         * frame.getInputPanel().shutdownButton.setEnabled(false);
+         * frame.getInputPanel().targetIP.setEnabled(false);
+         * 
+         * frame.getInputPanel().variablesPanel.setEnabled(false);
+         * frame.getInputPanel().saveCSVButton.setEnabled(true);
+         * }
+         */
         ;
     }
 
@@ -697,8 +708,7 @@ public class Views implements ViewListener {
      * 
      * @param filename
      */
-    // TODO: esto no guarda todos los datos por algun motivo
-    private void storeDataSet(String filename) {
+     private void storeDataSet(String filename) {
 
         java.util.List<String> csv = new ArrayList<>();
         int maxItemCount = 0;
@@ -746,8 +756,9 @@ public class Views implements ViewListener {
             aux = "";
 
         }
+        File savefile = new File(filename + ".csv");
+        savefile.getParentFile().mkdirs();
         try (
-
                 BufferedWriter writer = new BufferedWriter(new FileWriter(filename +
                         ".csv"));) {
             for (String line : csv) {
@@ -760,6 +771,7 @@ public class Views implements ViewListener {
         System.out.println("exporte como csv");
     }
 
+    @SuppressWarnings("unused")
     public void validateInput() throws IllegalArgumentException {
         Float value;
         testTypes selectedTest = this.getTestType();
@@ -822,7 +834,6 @@ public class Views implements ViewListener {
     /**
      * Implements behaviour for button input
      */
-    // TODO: MEJORAR EL MANEJO DE ERRORES
     private class ButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -859,7 +870,6 @@ public class Views implements ViewListener {
         }
 
         private void handleTestParameterLoad() {
-            // TODO: Validar en la vista el input
             boolean testLoadSuccess = true;
             testTypes test = getTestType();
             try {
@@ -957,12 +967,9 @@ public class Views implements ViewListener {
             System.err.println("estoy en iniciar");
             frame.inputPanel.measurementsPanel.setVisible(true);
             getController().startMeasurements();
-            try
-            {
-                Thread.sleep(500);
-            }
-            catch(Exception e)
-            {
+            try {
+                Thread.sleep(400);
+            } catch (Exception e) {
             }
             plotUpdater.execute();
             frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
@@ -975,7 +982,7 @@ public class Views implements ViewListener {
                 blockInput(testStates.TEST_PARAMETER_READY);
                 System.err.println(e.getMessage());
                 alert(e.getMessage());
-            } // TODO Agregar lógica de inicio de ensayo
+            } 
 
         }
 
@@ -991,7 +998,7 @@ public class Views implements ViewListener {
                 blockInput(testStates.TEST_PARAMETER_READY);
                 System.err.println(e.getMessage());
                 alert(e.getMessage());
-            } // TODO Agregar lógica de inicio de ensayo
+            } 
 
         }
 

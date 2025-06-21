@@ -6,6 +6,7 @@ import javax.swing.JPanel;
 
 public class BasicBackgroundPanel extends JPanel
 {
+    @SuppressWarnings("unused")
     private Image background;
  
     public BasicBackgroundPanel(Image background)

@@ -103,7 +103,6 @@ public final class Constants {
     public static final String CLEAR_TO_RECEIVE = "glob/CLEAR_TO_RECEIVE";
     public static final String SAVE_TO_BUFFER = "glob/SAVE_TO_BUFFER";
     public static final String SIMULATOR_SPEED_LIMIT = "glob/SIMULATOR_SPEED_LIMIT";
-    // TODO: Ver bien como se llaman los vectores
     public static final String TORQUE_TIME_VALUES = "glob/TORQUE_VALUES";
     public static final String TIMESTAMP = "glob/TIMESTAMP";
     public static final String TORQUE_VS_TIMESTAMP_SELECTED = "glob/TORQUE_VS_TIMESTAMP_SELECTED";
@@ -135,6 +134,7 @@ public final class Constants {
     public static final String TORQUE_BIAS = "unit/ladder.TORQUE_BIAS";
     public static final String QUADRATIC_COEFF = "unit/ladder.QUADRATIC_COEFF";
     public static final String LINEAR_COEFF = "unit/ladder.LINEAR_COEFF";
+    
     // TODO: Definir si estas variables entran
     public static final String ANGULAR_VELOCITY = "unit/ladder.ANGULAR_VELOCITY";
     public static final String INERTIA_COEFF = "unit/ladder.INERTIA_COEFF";
@@ -153,7 +153,7 @@ public final class Constants {
 
     public static final int GRAPH_UPDATE_RATIO = 1;
     public static final int GRAPH_BUFFER_SIZE = 10000;
-    public static final String CSV_FILEPATH = "C:\\Users\\juanh\\OneDrive\\Escritorio\\TPP\\";
+    public static final String CSV_FILEPATH = "Test output/";
 
     /*
      * simulator_axis.actualTorque.value

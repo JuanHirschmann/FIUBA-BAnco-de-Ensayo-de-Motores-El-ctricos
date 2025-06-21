@@ -68,9 +68,9 @@ public class TorqueEquationParameters {
             this.parameterUnit = parameterUnit;
         }
 
-        public void update(String newValue) {
+        /* public void update(String newValue) {
             this.parameterValue = newValue;
-        }
+        } */
 
         public String getDisplayName() {
             return this.parameterKey + " " + this.parameterUnit + ": ";
@@ -80,10 +80,12 @@ public class TorqueEquationParameters {
             return this.parameterValue;
         }
 
+        @SuppressWarnings("unused")
         public String getVarName() {
             return this.parameterVarName;
         }
 
+        @SuppressWarnings("unused")
         public String getVarPath() {
             return this.parameterVarPath;
         }

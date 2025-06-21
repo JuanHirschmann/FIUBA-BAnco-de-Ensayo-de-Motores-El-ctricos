@@ -50,8 +50,8 @@ public class TorqueEquationParameters {
      */
     public void setParameters(JPanel panel) {
         for (String key : this.parameterValue.keySet()) {
-            panel.add(parameterLabels.get(key));
-            panel.add(parameterInput.get(key));
+            panel.add(parameterLabels.get(key),1);
+            panel.add(parameterInput.get(key),1);
         }
     }
 
@@ -65,7 +65,7 @@ public class TorqueEquationParameters {
     public void addParameter(String parameterKey, String parameterVarName, String parameterVarPath, String parameterValue, String parameterUnits){
         this.parameterValue.put(parameterKey, new TorqueEquationParameter(parameterKey,parameterVarName,parameterVarPath,parameterValue,parameterUnits));
         this.parameterLabels.put(parameterKey, new JLabel(this.parameterValue.get(parameterKey).getDisplayName()));
-        this.parameterInput.put(parameterKey, new JTextField(this.parameterValue.get(parameterKey).getDisplayValue(), 5));
+        this.parameterInput.put(parameterKey, new JTextField(this.parameterValue.get(parameterKey).getDisplayValue(), 10));
     }
 
     

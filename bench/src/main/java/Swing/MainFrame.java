@@ -1,6 +1,7 @@
 package Swing;
 
-import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -33,11 +34,26 @@ public class MainFrame extends JFrame{
         setSize(1200,800);
         setLocation(0,0);
         setTitle("SCDin - Simulador de Carga Dinámica");
-        setLayout(new BorderLayout(0,0));
         setVisible(true);
-        add(inputPanel,BorderLayout.NORTH);
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc= new GridBagConstraints();
+        gbc.gridx=0;
+        gbc.gridy=0;
+        gbc.gridheight=1;
+        gbc.gridwidth=0;
+        gbc.weightx=1;
+        gbc.fill=GridBagConstraints.BOTH;
+        add(inputPanel,gbc);
+        gbc.gridx=0;
+        gbc.gridy=1;
+        gbc.gridheight=2;
+        gbc.gridwidth=0;
+        gbc.weightx=1;
+        gbc.weighty=0.5;
         
-        add(chartPanel,BorderLayout.CENTER);
+        gbc.fill=GridBagConstraints.BOTH;
+        
+        add(chartPanel,gbc);
     }
     
     /** 
