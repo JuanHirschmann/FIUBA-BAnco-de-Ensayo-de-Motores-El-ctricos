@@ -10,7 +10,7 @@ Aplicación
     Arreglar itemsLoaded
     File lock (OK)
         Se rompe cuando crashea la aplicación.
-    Desharcodear
+    Desharcodear (OK)
     Logger, ver si tengo ganas
 PLC
     Ver como reiniciar y terminar un ensayo

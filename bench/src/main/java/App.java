@@ -1,3 +1,6 @@
+import static Views.Constants.LOCKFILE_PATHNAME;
+import static Views.Constants.SEVERAL_INSTANCE_DETECTED_MSG;
+
 import java.io.File;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -11,10 +14,10 @@ import Views.Views;
 public class App {
 
     public static void main(String[] args) {
-        File lockFile = new File("lockfile/SCDin.lock");
+        File lockFile = new File(LOCKFILE_PATHNAME);
         if (lockFile.exists() && !lockFile.isDirectory()) {
             JOptionPane.showMessageDialog(null,
-                    "Otra instancia de SCDin se está ejecutando. Por favor, finalice el proceso para poder abrir una nueva instancia. ");
+                    SEVERAL_INSTANCE_DETECTED_MSG);
         } else {
             lockFile.deleteOnExit();
             try {

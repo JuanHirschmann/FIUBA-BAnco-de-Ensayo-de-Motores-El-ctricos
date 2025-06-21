@@ -1,6 +1,15 @@
 package Controller;
 
 import static Views.Constants.CSV_DELIMITER;
+import static Views.Constants.FILE_EXCEEDS_MAX_TORQUE_MSG;
+import static Views.Constants.FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG;
+import static Views.Constants.MAX_SPEED;
+import static Views.Constants.MAX_TORQUE;
+import static Views.Constants.MIN_COMMAND_DELTA;
+import static Views.Constants.NO_FILE_SELECTED_MSG;
+import static Views.Constants.SELF_SUSTAINED_FILE_EXCEEDS_MAX_SPEED_MSG;
+import static Views.Constants.SELF_SUSTAINED_FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG;
+import static Views.Constants.SELF_SUSTAINED_NO_FILE_SELECTED_MSG;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -68,21 +77,21 @@ public class TorqueTimeValues {
     public void torqueCommandCheck() throws IllegalArgumentException
     {
         if (this.length() == 0) {
-            throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
-        } else if (this.getMax() > 26) {
-            throw new IllegalArgumentException("El archivo elegido supera el torque máximo del sistema (26Nm).");
-        }else if (this.getMinTimeDelta() < 100) {
-            throw new IllegalArgumentException("El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms");
+            throw new IllegalArgumentException(NO_FILE_SELECTED_MSG);
+        } else if (this.getMax() > MAX_TORQUE) {
+            throw new IllegalArgumentException(FILE_EXCEEDS_MAX_TORQUE_MSG);
+        }else if (this.getMinTimeDelta() < MIN_COMMAND_DELTA) {
+            throw new IllegalArgumentException(FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG);
         }
     }
     public void speedCommandCheck() throws IllegalArgumentException
     {
         if (this.length() == 0) {
-            throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],velocidad[RPM]).");
-        } else if (this.getMax() > 3000) {
-            throw new IllegalArgumentException("Velocidad máxima del eje simulador excedida (3000RPM)");
-        }else if (this.getMinTimeDelta() < 100) {
-            throw new IllegalArgumentException("El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms (speed)");
+            throw new IllegalArgumentException(SELF_SUSTAINED_NO_FILE_SELECTED_MSG);
+        } else if (this.getMax() > MAX_SPEED) {
+            throw new IllegalArgumentException(SELF_SUSTAINED_FILE_EXCEEDS_MAX_SPEED_MSG);
+        }else if (this.getMinTimeDelta() < MIN_COMMAND_DELTA) {
+            throw new IllegalArgumentException(SELF_SUSTAINED_FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG);
         }
     }
     /** 
@@ -110,6 +119,8 @@ public class TorqueTimeValues {
             aux=data.get("timestamp").get(i-initialLength);
             if (Float.valueOf(aux)==0)
             {
+                /* adds 30 miliseconds after the last timestamp of 
+                the first period to deal with user input (if user inputs a zero-timestamp value, the extention should be done exactly at period end. With this is done at period end + 30ms) */
                 aux="30";
             }
             time_delta=Float.valueOf(aux)+Float.valueOf(data.get("timestamp").get(initialLength-1));

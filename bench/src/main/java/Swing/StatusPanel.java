@@ -1,4 +1,6 @@
 package Swing;
+import static Views.Constants.DANGER_TEXTURE_PATH;
+
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
@@ -16,7 +18,7 @@ public class StatusPanel extends JPanel {
         this.setBorder(new EmptyBorder(5, 5, 5, 5));
         this.setLayout( new GridLayout(1,4,0,0));
         try{
-            background=ImageIO.read(new File("src\\main\\resources\\danger_texture.jpg"));
+            background=ImageIO.read(new File(DANGER_TEXTURE_PATH));
                  
             }catch (Exception e)
             {

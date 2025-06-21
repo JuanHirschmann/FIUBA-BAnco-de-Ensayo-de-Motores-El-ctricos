@@ -1,5 +1,8 @@
 package Swing;
 
+import static Views.Constants.APP_NAME;
+import static Views.Constants.ICON_IMAGE_PATH;
+
 import java.awt.BorderLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -21,7 +24,7 @@ public class SelfSustainedTestFrame extends JFrame{
         
         try
         {
-            BufferedImage img=ImageIO.read(new File("src/main/resources/icon.png"));
+            BufferedImage img=ImageIO.read(new File(ICON_IMAGE_PATH));
             Image dimg=img.getScaledInstance(40, 40,Image.SCALE_SMOOTH);
             setIconImage(dimg);
         }catch (Exception e)
@@ -30,7 +33,7 @@ public class SelfSustainedTestFrame extends JFrame{
         }
         setSize(1200,800);
         setLocation(0,0);
-        setTitle("SCDin - Simulador de Carga Dinámica");
+        setTitle(APP_NAME);
         setLayout(new BorderLayout(0,0));
         setVisible(false);
         

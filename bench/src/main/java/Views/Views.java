@@ -4,16 +4,31 @@ import static Views.Constants.BROWSE_FILE_BUTTON_LABEL;
 import static Views.Constants.CONNECT_BUTTON_LABEL;
 import static Views.Constants.CSV_FILEPATH;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
+import static Views.Constants.FILE_EXCEEDS_MAX_TORQUE_MSG;
+import static Views.Constants.FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG;
+import static Views.Constants.LARGE_INERTIA_MSG;
+import static Views.Constants.MAX_SPEED;
+import static Views.Constants.MAX_TORQUE;
+import static Views.Constants.MIN_COMMAND_DELTA;
+import static Views.Constants.NEGATIVE_INERTIA_MSG;
+import static Views.Constants.NO_FILE_SELECTED_MSG;
 import static Views.Constants.PAUSE_BUTTON_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
 import static Views.Constants.SELF_SUSTAINED_MODE_WARNING;
+import static Views.Constants.SELF_SUSTAINED_NO_FILE_SELECTED_MSG;
 import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
+import static Views.Constants.UNKNOWN_FILE_FORMAT_MSG;
+import static Views.Constants.UNKNOWN_PARAMETER_FORMAT_MSG;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
 import static Views.Constants.WRITE_CSV;
 import static Views.Constants.SELF_SUSTAINED_TEST_LABEL;
 import static Views.Constants.RESUME_BUTTON_LABEL;
+import static Views.Constants.SAVEFILE_NAME_DATE_FORMAT;
+import static Views.Constants.SELF_SUSTAINED_FILE_EXCEEDS_MAX_SPEED_MSG;
+import static Views.Constants.SELF_SUSTAINED_FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.awt.BasicStroke;
@@ -784,19 +799,19 @@ public class Views implements ViewListener {
             TorqueTimeValues torquePath = getController().getTorqueTimeValues();
             endtime_ms = torquePath.getTimestamp(torquePath.length() - 1);
             if (torquePath.length() == 0) {
-                throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
-            } else if (torquePath.getMax() > 26) {
-                throw new IllegalArgumentException("El archivo elegido supera el torque máximo del sistema (26Nm).");
-            } else if (torquePath.getMinTimeDelta() < 100) {
+                throw new IllegalArgumentException(NO_FILE_SELECTED_MSG);
+            } else if (torquePath.getMax() > MAX_TORQUE) {
+                throw new IllegalArgumentException(FILE_EXCEEDS_MAX_TORQUE_MSG);
+            } else if (torquePath.getMinTimeDelta() < MIN_COMMAND_DELTA) {
                 throw new IllegalArgumentException(
-                        "El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms");
+                        FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG);
             }
         }
         try {
             Integer endtime_int = Float.valueOf(endtime_ms).intValue();
         } catch (NumberFormatException e) {
             System.out.println(endtime_ms);
-            throw new IllegalArgumentException("La última fila del archivo CSV tiene un formato desconocido.");
+            throw new IllegalArgumentException(UNKNOWN_FILE_FORMAT_MSG);
         }
 
         if (selectedTest == testTypes.TORQUE_VS_SPEED || selectedTest == testTypes.MIXED_TEST) {
@@ -808,24 +823,23 @@ public class Views implements ViewListener {
                 value = Float.valueOf(parameters.get("C").getValue());
                 value = Float.valueOf(parameters.get("D").getValue());
             } catch (Exception e) {
-                throw new IllegalArgumentException(
-                        "Los coeficientes de la ecuación cupla-velocida deben especificarse con separador decimal punto (.). ");
+                throw new IllegalArgumentException(UNKNOWN_PARAMETER_FORMAT_MSG);
             }
             if (Float.valueOf(parameters.get("D").getValue()) < 0) {
-                throw new IllegalArgumentException("El valor del término inercial no puede ser negativo");
+                throw new IllegalArgumentException(NEGATIVE_INERTIA_MSG);
             } else if (Float.valueOf(parameters.get("D").getValue()) > 0.3) {
-                throw new IllegalArgumentException("El valor del término inercial no puede ser mayor a 0.3");
+                throw new IllegalArgumentException(LARGE_INERTIA_MSG);
             }
         }
         if (frame.getInputPanel().selfSustainedTestSelection.isSelected()) {
             TorqueTimeValues speedPath = getController().getSpeedTimeValues();
             if (speedPath.length() == 0) {
-                throw new IllegalArgumentException("Seleccione un archivo en formato CSV (tiempo[ms],torque[Nm]).");
-            } else if (speedPath.getMax() > 3000) {
-                throw new IllegalArgumentException("El archivo elegido supera el torque máximo del sistema (26Nm).");
-            } else if (speedPath.getMinTimeDelta() < 100) {
+                throw new IllegalArgumentException(SELF_SUSTAINED_NO_FILE_SELECTED_MSG);
+            } else if (speedPath.getMax() > MAX_SPEED) {
+                throw new IllegalArgumentException(SELF_SUSTAINED_FILE_EXCEEDS_MAX_SPEED_MSG);
+            } else if (speedPath.getMinTimeDelta() < MIN_COMMAND_DELTA) {
                 throw new IllegalArgumentException(
-                        "El archivo elegido tiene uno o más comandos de tiempo con separación menor a 100ms");
+                        SELF_SUSTAINED_FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG);
             }
         }
 
@@ -1115,7 +1129,7 @@ public class Views implements ViewListener {
         }
 
         private void handleFileOutput() {
-            String pattern = "yyyyMMdd HHmmss";
+            String pattern = SAVEFILE_NAME_DATE_FORMAT;
             DateFormat df = new SimpleDateFormat(pattern);
             Date today = Calendar.getInstance().getTime();
             String todayAsString = df.format(today);

@@ -1,14 +1,22 @@
 package Swing;
 
 import static Views.Constants.BROWSE_FILE_BUTTON_LABEL;
+import static Views.Constants.CONNECTION_INDICATOR_LABEL;
 import static Views.Constants.CONNECT_BUTTON_LABEL;
 import static Views.Constants.DEFAULT_SERVER_ADDRESS;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
+import static Views.Constants.EQUATION_IMAGE_PATH;
+import static Views.Constants.LOADED_INDICATOR_LABEL;
+import static Views.Constants.POWER_INDICATOR_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
 import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
 import static Views.Constants.SELF_SUSTAINED_TEST_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
+import static Views.Constants.STATUS_INDICATOR_LABEL;
+import static Views.Constants.STOP_TIME_LABEL;
+import static Views.Constants.TARGET_IP_LABEL;
+import static Views.Constants.TEST_PERIODS_LABEL;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
 import static Views.Constants.WRITE_CSV;
 import java.awt.GridBagConstraints;
@@ -41,28 +49,28 @@ public class InputPanel extends JPanel {
     public JButton buttonConnect = new JButton(CONNECT_BUTTON_LABEL);// Conecta a la IP objetivo
     public JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo
     public JButton shutdownButton = new JButton(SHUTDOWN_BUTTON_LABEL);
-    public LabeledInput targetIP= new LabeledInput("IP objetivo: ");
+    public LabeledInput targetIP= new LabeledInput(TARGET_IP_LABEL);
     
     //Variables panel
-    public LabeledInput stopTime = new LabeledInput("Tiempo de fin [ms]:");
+    public LabeledInput stopTime = new LabeledInput(STOP_TIME_LABEL);
     public JTextField filename = new JTextField(15);
     public JButton setParametersButton = new JButton(SET_TEST_PARAMETERS_BUTTON_LABEL);
     public JButton saveCSVButton = new JButton(WRITE_CSV);
     public JButton openFileButton = new JButton(BROWSE_FILE_BUTTON_LABEL);
     public JComboBox<testTypes> torqueTestModeComboBox = new JComboBox<testTypes>();
     public TorqueEquation torqueEquationText = new TorqueEquation();
-    public ImageIcon equationIcon= new ImageIcon("src\\main\\resources\\equation.png");
+    public ImageIcon equationIcon= new ImageIcon(EQUATION_IMAGE_PATH);
     
     public JLabel torqueEquation = new JLabel(equationIcon);
     public TorqueEquationParameters torqueEquationParameters = new TorqueEquationParameters();
-    public JLabel testPeriodLabel = new JLabel("Cantidad de periodos a ensayar");
+    public JLabel testPeriodLabel = new JLabel(TEST_PERIODS_LABEL);
     public SpinnerModel numericModel = new SpinnerNumberModel(1, 1, 199, 1);
     public JSpinner testPeriodsSpinner = new JSpinner(numericModel);
     public JLabel itemsLoadedLabel = new JLabel("");
-    public StatusLight powerOnIndicator=new StatusLight("POTENCIA");
-    public StatusLight connectionIndicator=new StatusLight("CONEXIÓN");
-    public StatusLight semaphoreIndicator=new StatusLight("NO INICIADO");
-    public StatusLight loadedTestIndicator=new StatusLight("ENSAYO LISTO");
+    public StatusLight powerOnIndicator=new StatusLight(POWER_INDICATOR_LABEL);
+    public StatusLight connectionIndicator=new StatusLight(CONNECTION_INDICATOR_LABEL);
+    public StatusLight semaphoreIndicator=new StatusLight(STATUS_INDICATOR_LABEL);
+    public StatusLight loadedTestIndicator=new StatusLight(LOADED_INDICATOR_LABEL);
     public JCheckBox selfSustainedTestSelection=new JCheckBox(SELF_SUSTAINED_TEST_LABEL);
     public JButton openDUTFileButton = new JButton(SELF_SUSTAINED_TEST_IMPORT_LABEL);
     public JTextField DUTFilename = new JTextField(15);

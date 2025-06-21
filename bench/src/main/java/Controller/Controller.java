@@ -19,6 +19,8 @@ import static Model.Constants.TIMESTAMP;
 import static Model.Constants.TORQUE_TIME_BUFFER_SIZE;
 import static Model.Constants.TORQUE_TIME_VALUES;
 import static Model.Constants.VAR_PATH;
+import static Views.Constants.CONTROL_NOT_CONNECTED_MSG;
+import static Views.Constants.KEEPALIVE_FAILURE_MSG;
 
 import java.net.ConnectException;
 import java.util.concurrent.ExecutorService;
@@ -124,7 +126,6 @@ public class Controller {
      */
     public void startMeasurements() {
 
-        System.err.println("empece a medir");
         List<commands> measuredVars = new ArrayList<commands>();
         measuredVars.add(commands.TORQUE);
         // if()
@@ -169,11 +170,11 @@ public class Controller {
 
                 model.start();
             } catch (Exception e) {
-                throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+                throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
             }
         } else {
 
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -188,11 +189,11 @@ public class Controller {
 
                 model.stop();
             } catch (Exception e) {
-                throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+                throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
             }
         } else {
 
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -226,7 +227,7 @@ public class Controller {
             lowPriorityTimer.scheduleAtFixedRate(new lowPriorityUpdate(), 20, 200, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
 
     }
@@ -241,7 +242,7 @@ public class Controller {
             model.controllerOn();
 
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
 
     }
@@ -255,7 +256,7 @@ public class Controller {
         if (model.isConnected()) {
             model.controllerOff();
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
 
         }
     }
@@ -269,7 +270,7 @@ public class Controller {
         if (model.isConnected()) {
             model.powerOn();
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
 
     }
@@ -283,7 +284,7 @@ public class Controller {
         if (model.isConnected()) {
             model.powerOff();
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -296,7 +297,7 @@ public class Controller {
         if (model.isConnected()) {
             model.emergencyStop();
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -309,7 +310,7 @@ public class Controller {
         if (model.isConnected()) {
             model.emergencyRelease();
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -330,7 +331,7 @@ public class Controller {
             System.out.println(last_timestamp_as_int);
             model.setTestEndTime(String.valueOf(last_timestamp_as_int), true);
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -344,7 +345,7 @@ public class Controller {
         if (model.isConnected()) {
             model.selectTorqueVsSpeed(true);
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -369,7 +370,7 @@ public class Controller {
             System.out.print("ÚLTIMO TIMESTAMP");
             System.out.println(last_timestamp_as_int);
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -392,7 +393,7 @@ public class Controller {
             model.enableDUTAxis(true);
             DUTBufferTimer.scheduleAtFixedRate(new sendSpeedCommands(), 200, 1000, TimeUnit.MILLISECONDS);
         } else {
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
 
@@ -410,7 +411,7 @@ public class Controller {
             view.updateLoadedTestStatus(true);
         } else {
             view.updateLoadedTestStatus(false);
-            throw new ConnectException("El control no está conectado. Verifique la configuración IP");
+            throw new ConnectException();
         }
     }
 
@@ -544,7 +545,7 @@ public class Controller {
                 } else {
 
                     view.updateConnectionStatus(false);
-                    throw new Exception("Keepalive failed");
+                    throw new Exception(KEEPALIVE_FAILURE_MSG);
 
                 }
 
