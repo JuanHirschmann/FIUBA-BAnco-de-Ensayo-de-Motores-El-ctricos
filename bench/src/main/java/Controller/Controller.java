@@ -36,7 +36,7 @@ public class Controller {
     private MeasurementBuffer measurementsBufferedValues = new MeasurementBuffer();
     private TorqueTimeValues torqueTimeValues = new TorqueTimeValues();
     private TorqueTimeValues speedTimeValues = new TorqueTimeValues();
-
+    private serverSideTestStatus previousTestState = serverSideTestStatus.NOT_STARTED;
     ExecutorService measurementExecutor =Executors.newFixedThreadPool(20);
     ScheduledExecutorService torqueTimer = Executors.newScheduledThreadPool(10);
     ScheduledExecutorService bufferTimer = Executors.newScheduledThreadPool(10);
@@ -422,6 +422,10 @@ public class Controller {
     public void executeQueuedCommands() throws ConnectException {
         this.model.executeWriteQueue();
     }
+    public void setTestStatus(serverSideTestStatus status) throws ConnectException {
+        this.model.setTestStatus(status);
+        //this.model.executeWriteQueue();
+    }
 
     /*
      * Checks if model is connected
@@ -435,6 +439,11 @@ public class Controller {
         if (testStatus == serverSideTestStatus.ENDED) {
             this.stopMeasurements();
         }
+        if (previousTestState==serverSideTestStatus.READY_TO_START && testStatus==serverSideTestStatus.RUNNING) {
+            this.view.handleStartCommand();
+        } 
+        
+        this.previousTestState=testStatus;
 
     }
 

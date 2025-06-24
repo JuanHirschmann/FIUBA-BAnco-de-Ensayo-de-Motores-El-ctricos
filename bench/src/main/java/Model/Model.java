@@ -1,4 +1,5 @@
 package Model;
+
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -29,6 +30,7 @@ import static Model.Constants.CLEAR_TO_RECEIVE;
 import static Model.Constants.TEST_STATUS;
 import static Model.Constants.DUT_AXIS_ENABLE;
 
+import org.jfree.data.xy.VectorDataItem;
 import org.opcfoundation.webservices.XMLDA._1_0.ItemValue;
 import Model.Constants.serverSideTestError;
 import Model.Constants.serverSideTestStatus;
@@ -60,8 +62,36 @@ public class Model {
         } else {
             testState = serverSideTestStatus.READY_TO_START;
         }
-        //System.out.println(serverSideTestState);
+        // System.out.println(serverSideTestState);
         return testState;
+    }
+
+    /**
+     * @param args
+     */
+
+    public void setTestStatus(serverSideTestStatus status) throws ConnectException {
+        String value="2";
+        if(status==serverSideTestStatus.RUNNING)
+        {
+            value="0";
+        } else if (status==serverSideTestStatus.STOPPED)
+        {
+            value="1";
+        } else if (status==serverSideTestStatus.ENDED)
+        {
+            value="2";
+        } else if (status==serverSideTestStatus.NOT_STARTED)
+        {
+            value="3";
+        } else if (status==serverSideTestStatus.EMERGENCY_STOP)
+        {
+            value="4";
+        } else if (status==serverSideTestStatus.READY_TO_START)
+        {
+            value="5";
+        }
+        this.writeVar(value, VAR_PATH, TEST_STATUS);
     }
 
     /**
@@ -84,11 +114,11 @@ public class Model {
         } else if (serverSideError.equalsIgnoreCase("5")) {
             testError = serverSideTestError.NO_ERROR;
         } else if (serverSideError.equalsIgnoreCase("9")) {
-            testError = serverSideTestError.KEEPLAIVE_FAILED;
+            testError = serverSideTestError.KEEPALIVE_FAILED;
         } else {
             testError = serverSideTestError.UNKNOWN_ERROR;
         }
-        //System.out.println(testError.getResponseMessage());
+        // System.out.println(testError.getResponseMessage());
         return testError;
     }
 
@@ -108,6 +138,8 @@ public class Model {
         try {
             mySimotionWebService = new org.opcfoundation.webservices.XMLDA._1_0.ServiceStub(new java.net.URL(URL),
                     null);
+            this.writeVar("FALSE", "SIMOTION", "glob/KEEPALIVE_OVERRIDE");
+
         } catch (Exception exception) {
             // exception.printStackTrace();
             // mySimotionWebService=null;
@@ -403,6 +435,8 @@ public class Model {
             org.opcfoundation.webservices.XMLDA._1_0.ItemValue[] items = new ItemValue[vars.size()];
             int i = 0;
             for (String varName : vars.keySet()) {
+                System.err.print("Escribiendo: ");
+                System.err.println(varName);
                 org.opcfoundation.webservices.XMLDA._1_0.ItemValue item = new ItemValue();
                 item.setItemPath(varPath);
                 item.setItemName(varName);
@@ -553,7 +587,7 @@ public class Model {
      * 
      * @throws ConnectException
      */
-     // stop en PLC
+    // stop en PLC
     public void start() throws ConnectException {
         writeVar("FALSE", VAR_PATH, SOFTWARE_STOP_BUTTON);
         writeVar("TRUE", VAR_PATH, SOFTWARE_START_BUTTON);
@@ -712,7 +746,6 @@ public class Model {
     public void powerOff() throws ConnectException {
         this.enableSimulatorAxis(false);
         this.enableLineModule(false);
-        writeVar("_STOP", VAR_PATH, OPERATION_MODE);
     }
 
     /**
@@ -730,17 +763,16 @@ public class Model {
         this.writeVar("FALSE", VAR_PATH, SAVE_TO_BUFFER);
 
     }
-    public void enableDUTAxis(boolean queue) throws Exception
-    {
-        if(queue)
-        {
+
+    public void enableDUTAxis(boolean queue) throws Exception {
+        if (queue) {
             queueWriteCommand(DUT_AXIS_ENABLE, "TRUE");
-        }else
-        {
+        } else {
             this.writeVar("TRUE", VAR_PATH, DUT_AXIS_ENABLE);
 
         }
     }
+
     public static void main(String[] args) {
 
         Model model = new Model();

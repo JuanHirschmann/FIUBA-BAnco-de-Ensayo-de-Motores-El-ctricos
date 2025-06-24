@@ -20,8 +20,9 @@ public class LabeledInput extends JTextField {
          * @param panel
          */
         public void set(JPanel panel) {
-            panel.add(input,1);
             panel.add(inputLabel,1);
+            panel.add(input,1);
+            
         }
         
         /** 

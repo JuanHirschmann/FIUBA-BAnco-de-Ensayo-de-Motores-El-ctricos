@@ -19,10 +19,10 @@ public class TorqueEquationParameters {
     Map<String, TorqueEquationParameter> parameterValue = new TreeMap<>();
 
     public TorqueEquationParameters() {
-        this.addParameter("A",TORQUE_BIAS, VAR_PATH,"0", "[Nm]");
-        this.addParameter("B",LINEAR_COEFF,VAR_PATH ,"0", "[Nm/RPM]");
-        this.addParameter("C",QUADRATIC_COEFF,VAR_PATH, "0", "[Nm/RPM^2]");
-        this.addParameter("D",INERTIA_COEFF,VAR_PATH, "0", "[Nm/(RPM*s)]");
+        this.addParameter("A",TORQUE_BIAS, VAR_PATH,"0", "[Nm]",5);
+        this.addParameter("B",LINEAR_COEFF,VAR_PATH ,"0", "[Nm/RPM]",5);
+        this.addParameter("C",QUADRATIC_COEFF,VAR_PATH, "0", "[Nm/RPM^2]",10);
+        this.addParameter("D",INERTIA_COEFF,VAR_PATH, "0", "[Nm/(RPM*s)]",5);
     }
 
     
@@ -62,10 +62,10 @@ public class TorqueEquationParameters {
         }
     }
 
-    public void addParameter(String parameterKey, String parameterVarName, String parameterVarPath, String parameterValue, String parameterUnits){
+    public void addParameter(String parameterKey, String parameterVarName, String parameterVarPath, String parameterValue, String parameterUnits,int columns){
         this.parameterValue.put(parameterKey, new TorqueEquationParameter(parameterKey,parameterVarName,parameterVarPath,parameterValue,parameterUnits));
         this.parameterLabels.put(parameterKey, new JLabel(this.parameterValue.get(parameterKey).getDisplayName()));
-        this.parameterInput.put(parameterKey, new JTextField(this.parameterValue.get(parameterKey).getDisplayValue(), 10));
+        this.parameterInput.put(parameterKey, new JTextField(this.parameterValue.get(parameterKey).getDisplayValue(), columns));
     }
 
     

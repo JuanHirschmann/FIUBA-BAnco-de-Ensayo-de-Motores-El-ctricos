@@ -8,23 +8,22 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import static Model.Constants.VAR_PATH;
 
-public class TorqueEquationParameters {
+//TODO: CREO QUE ESTO NO SE USA
+/*  public class TorqueEquationParameters {
 
     Map<String, JLabel> parameterLabels = new Hashtable<>();
     Map<String, JTextField> parameterInput = new Hashtable<>();
     Map<String, TorqueEquationParameter> parameterValue = new Hashtable<>();
 
     public TorqueEquationParameters() {
-        this.addParameter("A",VAR_PATH,"TORQUE_BIAS", "0", "[Nm]");
-        this.addParameter("B",VAR_PATH,"LINEAR_TERM", "0", "[Nm/RPM]");
-        this.addParameter("C",VAR_PATH,"CUADRATIC_TERM", "0", "[Nm/RPM^2]");
-        this.addParameter("D",VAR_PATH,"INTERTIAL_TERM", "0", "[Nm/(RPM*s)]");
+        this.addParameter("A",VAR_PATH,"TORQUE_BIAS", "0", "[Nm]",3);
+        this.addParameter("B",VAR_PATH,"LINEAR_TERM", "0", "[Nm/RPM]",5);
+        this.addParameter("C",VAR_PATH,"CUADRATIC_TERM", "0", "[Nm/RPM^2]",7);
+        this.addParameter("D",VAR_PATH,"INTERTIAL_TERM", "0", "[Nm/(RPM*s)]",5);
     }
 
     
-    /** 
-     * @return Map<String, String>
-     */
+    
     public Map<String, String> getParameterValues() {
         Map<String, String> output = new Hashtable<>();
         for (String key : this.parameterValue.keySet()) {
@@ -47,10 +46,10 @@ public class TorqueEquationParameters {
         }
     }
 
-    public void addParameter(String parameterKey, String parameterVarName, String parameterVarPath, String parameterValue, String parameterUnits){
+    public void addParameter(String parameterKey, String parameterVarName, String parameterVarPath, String parameterValue, String parameterUnits,int columns){
         this.parameterValue.put(parameterKey, new TorqueEquationParameter(parameterKey,parameterVarName,parameterVarPath,parameterValue,parameterUnits));
         this.parameterLabels.put(parameterKey, new JLabel(this.parameterValue.get(parameterKey).getDisplayName()));
-        this.parameterInput.put(parameterKey, new JTextField(this.parameterValue.get(parameterKey).getDisplayValue(), 5));
+        this.parameterInput.put(parameterKey, new JTextField(this.parameterValue.get(parameterKey).getDisplayValue(), columns));
     }
 
     private class TorqueEquationParameter {
@@ -70,7 +69,7 @@ public class TorqueEquationParameters {
 
         /* public void update(String newValue) {
             this.parameterValue = newValue;
-        } */
+        }
 
         public String getDisplayName() {
             return this.parameterKey + " " + this.parameterUnit + ": ";
@@ -92,3 +91,4 @@ public class TorqueEquationParameters {
     }
 }
 
+ */

@@ -12,21 +12,40 @@ Aplicación
         Se rompe cuando crashea la aplicación.
     Desharcodear (OK)
     Logger, ver si tengo ganas
+    Mensaje de prelock
+    SYNC start button y start software (OK)
+    autofullscreen
+    testReady en 5120 o total. Lo que pase primero
+    ver si tengo ganas de hacer la interpolacion en los gráficos
 PLC
-    Ver como reiniciar y terminar un ensayo
+    Ver como reiniciar y terminar un ensayo (OK)
     Mejorar un poco el filtro y repetir pruebas
         Escalón todas variables
         SAE 
         US06
-    Verificar alarmas por exceso de cupla y derivada de cupla
+    Verificar alarmas por exceso de cupla y derivada de cupla (OK)
     Limpiar y organizar código
         Nomenclatura
         Estructuras
+            struct de variables medidas
+                DUT 
+                SIM 
+            struct de señales
+                struct de enables
     Corregir comportamiento en emergencia cuando el ensayo no está autocontenido
     Corregir algoritmo de torque-tiempo para que acepte consignas de 100ms (se traba con consignas peques)
-    Corregir cupla cuando se cargan los parámetros y no se inicia el ensayo
-    Corregir fin de ensayo cuando se agota un buffer. 
-    Duración máxima de ensayo
+    Corregir cupla cuando se cargan los parámetros y no se inicia el ensayo (OK)
+    Corregir fin de ensayo cuando se agota un buffer. (OK)
+    Duración máxima de ensayo.
+    Hay un retardo raro con esacalones de cupla.
+    Benchmark
+        Tiempo a disconnect 4 segundos
+        Velocidad máxima
+        Torque máximo
+    Corregir derivada de cupla
+        7000Nm/s max diff
+        23Nm max torque
+
 Tesis
     Agregar correcciones de Alejandro/Jorge 
     Actualizar gráficos si es necesario
@@ -36,6 +55,8 @@ Manual
         Máquina de estados 
         Inicio / freno de ensayo
         Estados del semáforo
+        Corregir factores de conversion
+
 Presentación
     Armar estructura
 

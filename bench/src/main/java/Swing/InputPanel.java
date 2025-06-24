@@ -49,10 +49,10 @@ public class InputPanel extends JPanel {
     public JButton buttonConnect = new JButton(CONNECT_BUTTON_LABEL);// Conecta a la IP objetivo
     public JButton startButton = new JButton(START_BUTTON_LABEL);// Arranca el ensayo
     public JButton shutdownButton = new JButton(SHUTDOWN_BUTTON_LABEL);
-    public LabeledInput targetIP= new LabeledInput(TARGET_IP_LABEL);
+    public LabeledInput targetIP= new LabeledInput(TARGET_IP_LABEL,20);
     
     //Variables panel
-    public LabeledInput stopTime = new LabeledInput(STOP_TIME_LABEL);
+    public LabeledInput stopTime = new LabeledInput(STOP_TIME_LABEL,7);
     public JTextField filename = new JTextField(15);
     public JButton setParametersButton = new JButton(SET_TEST_PARAMETERS_BUTTON_LABEL);
     public JButton saveCSVButton = new JButton(WRITE_CSV);
@@ -139,7 +139,7 @@ public class InputPanel extends JPanel {
         gbc.gridy=0;
         gbc.gridheight=1;
         gbc.gridwidth=2;
-        gbc.weightx=0.5;
+        gbc.weightx=0.2;
         gbc.weighty=1;
         gbc.fill=GridBagConstraints.BOTH;
         //gbc.insets = new Insets(3,10,3,10);

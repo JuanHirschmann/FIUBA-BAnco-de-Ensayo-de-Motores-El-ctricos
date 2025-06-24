@@ -77,7 +77,7 @@ public final class Constants {
         MAX_TORQUE_DERIVATIVE_EXCEEDED("Máxima derivada de cupla excedida."),
         MAX_TORQUE_VALUE_EXCEEDED("Cupla máxima excedida."),
         NO_ERROR("Sin error."),
-        KEEPLAIVE_FAILED("Falla de keepalive. Verifique el que el cable de red se encuentre conectado"),
+        KEEPALIVE_FAILED("Falla de keepalive. Verifique el que el cable de red se encuentre conectado"),
         UNKNOWN_ERROR("Error desconocido.");
         String responseMessage;
         serverSideTestError(String responseMessage) {
