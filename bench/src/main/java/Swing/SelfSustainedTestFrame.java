@@ -24,7 +24,7 @@ public class SelfSustainedTestFrame extends JFrame{
         
         try
         {
-            BufferedImage img=ImageIO.read(new File(ICON_IMAGE_PATH));
+            BufferedImage img=ImageIO.read(getClass().getClassLoader().getResourceAsStream(ICON_IMAGE_PATH));
             Image dimg=img.getScaledInstance(40, 40,Image.SCALE_SMOOTH);
             setIconImage(dimg);
         }catch (Exception e)

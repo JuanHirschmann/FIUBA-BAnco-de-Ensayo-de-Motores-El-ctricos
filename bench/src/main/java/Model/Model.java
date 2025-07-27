@@ -21,6 +21,7 @@ import static Model.Constants.CURRENT_ERROR;
 import static Model.Constants.DUT_CLEAR_TO_RECEIVE;
 import static Model.Constants.ENABLE_ACTIVE_LINEMODULE;
 import static Model.Constants.ENABLE_SIMULATOR_AXIS;
+import static Model.Constants.KEEPALIVE_OVERRIDE;
 import static Model.Constants.MEASURED_SIMULATOR_CURRENT;
 import static Model.Constants.MEASURED_SIMULATOR_TORQUE;
 import static Model.Constants.OPERATION_MODE;
@@ -138,7 +139,7 @@ public class Model {
         try {
             mySimotionWebService = new org.opcfoundation.webservices.XMLDA._1_0.ServiceStub(new java.net.URL(URL),
                     null);
-            this.writeVar("FALSE", "SIMOTION", "glob/KEEPALIVE_OVERRIDE");
+            this.writeVar("FALSE", "SIMOTION", KEEPALIVE_OVERRIDE);
 
         } catch (Exception exception) {
             // exception.printStackTrace();

@@ -6,6 +6,7 @@ import static Views.Constants.CSV_FILEPATH;
 import static Views.Constants.EMERGENCY_STOP_BUTTON_LABEL;
 import static Views.Constants.FILE_EXCEEDS_MAX_TORQUE_MSG;
 import static Views.Constants.FILE_EXCEEDS_MIN_COMMAND_DELTA_MSG;
+import static Views.Constants.LARGE_BIAS_MSG;
 import static Views.Constants.LARGE_INERTIA_MSG;
 import static Views.Constants.MAX_SPEED;
 import static Views.Constants.MAX_TORQUE;
@@ -14,11 +15,13 @@ import static Views.Constants.NEGATIVE_INERTIA_MSG;
 import static Views.Constants.NO_FILE_SELECTED_MSG;
 import static Views.Constants.PAUSE_BUTTON_LABEL;
 import static Views.Constants.POWER_ON_BUTTON_LABEL;
+import static Views.Constants.PRE_START_WARNING;
 import static Views.Constants.SELF_SUSTAINED_MODE_WARNING;
 import static Views.Constants.SELF_SUSTAINED_NO_FILE_SELECTED_MSG;
 import static Views.Constants.SELF_SUSTAINED_TEST_IMPORT_LABEL;
 import static Views.Constants.SHUTDOWN_BUTTON_LABEL;
 import static Views.Constants.START_BUTTON_LABEL;
+import static Views.Constants.UNKNOWN_ENDTIME;
 import static Views.Constants.UNKNOWN_FILE_FORMAT_MSG;
 import static Views.Constants.UNKNOWN_PARAMETER_FORMAT_MSG;
 import static Views.Constants.SET_TEST_PARAMETERS_BUTTON_LABEL;
@@ -42,6 +45,7 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -322,7 +326,7 @@ public class Views implements ViewListener {
 
         frame.getInputPanel().selfSustainedTestSelection.addActionListener(new ButtonHandler());
         frame.getInputPanel().openDUTFileButton.addActionListener(new ButtonHandler());
-        frame.setDefaultCloseOperation(JDialog.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         createChart();
         createSelfSustainedChart();
         this.blockInput(testStates.INITIAL);
@@ -341,7 +345,7 @@ public class Views implements ViewListener {
             frame.getInputPanel().powerOnButton.setEnabled(false);
             frame.getInputPanel().startButton.setEnabled(false);
             frame.getInputPanel().emergencyButton.setEnabled(false);
-            frame.getInputPanel().shutdownButton.setEnabled(false);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
             frame.getInputPanel().targetIP.setEnabled(true);
             frame.getInputPanel().variablesPanel.setEnabled(false);
 
@@ -350,7 +354,7 @@ public class Views implements ViewListener {
             frame.getInputPanel().powerOnButton.setEnabled(true);
             frame.getInputPanel().startButton.setEnabled(false);
             frame.getInputPanel().emergencyButton.setEnabled(true);
-            frame.getInputPanel().shutdownButton.setEnabled(false);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
             frame.getInputPanel().targetIP.setEnabled(false);
 
             frame.getInputPanel().variablesPanel.setEnabled(false);
@@ -396,11 +400,11 @@ public class Views implements ViewListener {
             frame.getInputPanel().variablesPanel.setEnabled(false);
 
         } else if (currentStep == testStates.TEST_END) {
-            frame.getInputPanel().buttonConnect.setEnabled(false);
+            frame.getInputPanel().buttonConnect.setEnabled(true);
             frame.getInputPanel().powerOnButton.setEnabled(false);
             frame.getInputPanel().startButton.setEnabled(true);
             frame.getInputPanel().emergencyButton.setEnabled(false);
-            frame.getInputPanel().shutdownButton.setEnabled(false);
+            frame.getInputPanel().shutdownButton.setEnabled(true);
             frame.getInputPanel().targetIP.setEnabled(false);
 
             frame.getInputPanel().variablesPanel.setEnabled(false);
@@ -645,12 +649,12 @@ public class Views implements ViewListener {
             frame.getInputPanel().userMessageAlert.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
             this.dialog = frame.getInputPanel().userMessageAlert.createDialog("Alerta");
             this.dialog.setModal(false);
-            this.dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            this.dialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
             this.dialog.setVisible(true);
             this.popupVisible = true;
 
         }
-        if (/* !this.dialog.isActive() || */ !frame.getInputPanel().userMessageAlert.isShowing()) {
+        if (frame.getInputPanel().userMessageAlert.isShowing()) {
             this.popupVisible = false;
         }
 
@@ -784,6 +788,7 @@ public class Views implements ViewListener {
         if (selectedTest == testTypes.TORQUE_VS_SPEED) {
 
             endtime_ms = frame.getInputPanel().stopTime.getText();
+
             System.out.println(endtime_ms);
         } else {
             TorqueTimeValues torquePath = getController().getTorqueTimeValues();
@@ -801,7 +806,11 @@ public class Views implements ViewListener {
             Integer endtime_int = Float.valueOf(endtime_ms).intValue();
         } catch (NumberFormatException e) {
             System.out.println(endtime_ms);
-            throw new IllegalArgumentException(UNKNOWN_FILE_FORMAT_MSG);
+            if (selectedTest == testTypes.TORQUE_VS_SPEED) {
+                throw new IllegalArgumentException(UNKNOWN_ENDTIME);
+            } else {
+                throw new IllegalArgumentException(UNKNOWN_FILE_FORMAT_MSG);
+            }
         }
 
         if (selectedTest == testTypes.TORQUE_VS_SPEED || selectedTest == testTypes.MIXED_TEST) {
@@ -815,9 +824,13 @@ public class Views implements ViewListener {
             } catch (Exception e) {
                 throw new IllegalArgumentException(UNKNOWN_PARAMETER_FORMAT_MSG);
             }
+            if (Float.valueOf(parameters.get("A").getValue()) > MAX_TORQUE) {
+
+                throw new IllegalArgumentException(LARGE_BIAS_MSG);
+            }
             if (Float.valueOf(parameters.get("D").getValue()) < 0) {
                 throw new IllegalArgumentException(NEGATIVE_INERTIA_MSG);
-            } else if (Float.valueOf(parameters.get("D").getValue()) > 0.3) {
+            } else if (Float.valueOf(parameters.get("D").getValue()) > 0.2) {
                 throw new IllegalArgumentException(LARGE_INERTIA_MSG);
             }
         }
@@ -834,28 +847,34 @@ public class Views implements ViewListener {
         }
 
     }
+
     public void handleStartCommand() {
-            System.err.println("estoy en iniciar");
-            frame.inputPanel.measurementsPanel.setVisible(true);
-            getController().startMeasurements();
-            try {
-                Thread.sleep(400);
-            } catch (Exception e) {
-            }
-            plotUpdater.execute();
-            frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
-
-            try {
-                getController().start();
-                blockInput(testStates.TEST_RUNNING);
-            } catch (Exception e) {
-                System.err.println("Tire error");
-                blockInput(testStates.TEST_PARAMETER_READY);
-                System.err.println(e.getMessage());
-                alert(e.getMessage());
-            }
-
+        System.err.println("estoy en iniciar");
+        frame.inputPanel.measurementsPanel.setVisible(true);
+        getController().startMeasurements();
+        try {
+            Thread.sleep(400);
+        } catch (Exception e) {
         }
+        plotUpdater.execute();
+        frame.getInputPanel().startButton.setText(PAUSE_BUTTON_LABEL);
+
+        try {
+            getController().start();
+            blockInput(testStates.TEST_RUNNING);
+        } catch (Exception e) {
+            System.err.println("Tire error");
+            blockInput(testStates.TEST_PARAMETER_READY);
+            System.err.println(e.getMessage());
+            alert(e.getMessage());
+        }
+
+    }
+
+    public boolean popupIsVisible() {
+        return this.popupVisible;
+    }
+
     /**
      * Implements behaviour for button input
      */
@@ -899,7 +918,7 @@ public class Views implements ViewListener {
             testTypes test = getTestType();
             try {
                 validateInput();
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 testLoadSuccess = false;
                 alert(e.getMessage());
             }
@@ -956,13 +975,13 @@ public class Views implements ViewListener {
                 }
             }
             // blockInput(testStates.TEST_RUNNING);
-            // alert(PRE_START_WARNING);
 
             if (testLoadSuccess) {
                 try {
                     Thread.sleep(150);
                     getController().executeQueuedCommands();
                     // TODO: ESTO TIENE QUE IR CUANDO DA EL OK DE ENSAYO CARGADO
+                    alert(PRE_START_WARNING);
                     getController().setTestStatus(serverSideTestStatus.READY_TO_START);
                 } catch (Exception e) {
 
@@ -989,8 +1008,6 @@ public class Views implements ViewListener {
                 frame.getInputPanel().filename.setText("");
             }
         }
-
-        
 
         private void handleResumeCommand() {
             System.err.println("estoy en reanudar");
@@ -1070,7 +1087,7 @@ public class Views implements ViewListener {
             try {
 
                 getController().powerOff();
-                //getController().PLCStop();
+                getController().PLCStop();
                 blockInput(testStates.TEST_END);
             } catch (Exception e) {
                 System.err.println("Tire error");
@@ -1125,7 +1142,7 @@ public class Views implements ViewListener {
             DateFormat df = new SimpleDateFormat(pattern);
             Date today = Calendar.getInstance().getTime();
             String todayAsString = df.format(today);
-            storeDataSet(CSV_FILEPATH + todayAsString);
+            storeDataSet(System.getenv("APPDATA") + CSV_FILEPATH + todayAsString);
         }
     }
 

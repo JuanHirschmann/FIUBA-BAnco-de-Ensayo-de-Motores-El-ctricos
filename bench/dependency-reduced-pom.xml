@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>src.main.java</groupId>
+  <groupId>bench</groupId>
   <artifactId>bench</artifactId>
   <version>1.0-SNAPSHOT</version>
   <build>
@@ -23,7 +23,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>src.main.java.App</mainClass>
+                  <mainClass>App.App</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -32,66 +32,9 @@
       </plugin>
     </plugins>
   </build>
-  <dependencies>
-    <dependency>
-      <groupId>com.sample1</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/axis-ant.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample2</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/axis.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample3</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/commons-discovery-0.2.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample4</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/commons-logging-1.0.4.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample5</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/jaxrpc.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample6</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/log4j-1.2.8.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample7</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/saaj.jar</systemPath>
-    </dependency>
-    <dependency>
-      <groupId>com.sample8</groupId>
-      <artifactId>sample</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/resources/wsdl4j-1.5.1.jar</systemPath>
-    </dependency>
-  </dependencies>
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.source>17</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 </project>

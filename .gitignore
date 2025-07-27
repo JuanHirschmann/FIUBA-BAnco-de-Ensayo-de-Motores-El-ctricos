@@ -1,1 +1,8 @@
 /.vscode
+target/
+lockfile/
+Output/
+*.txt
+*.iss
+*.class
+*.jar

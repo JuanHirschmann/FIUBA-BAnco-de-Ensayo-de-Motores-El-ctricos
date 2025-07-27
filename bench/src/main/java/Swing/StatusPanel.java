@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -18,7 +19,7 @@ public class StatusPanel extends JPanel {
         this.setBorder(new EmptyBorder(5, 5, 5, 5));
         this.setLayout( new GridLayout(1,4,0,0));
         try{
-            background=ImageIO.read(new File(DANGER_TEXTURE_PATH));
+            background=ImageIO.read(getClass().getClassLoader().getResourceAsStream(DANGER_TEXTURE_PATH));
                  
             }catch (Exception e)
             {

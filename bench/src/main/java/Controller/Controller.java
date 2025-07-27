@@ -13,6 +13,7 @@ import java.util.Map;
 import static Model.Constants.DUT_SAVE_TO_BUFFER;
 import static Model.Constants.DUT_SPEED_TIME_VALUES;
 import static Model.Constants.DUT_TIMESTAMP;
+import static Model.Constants.KEEPALIVE;
 import static Model.Constants.MAX_CHUNK_SIZE;
 import static Model.Constants.SAVE_TO_BUFFER;
 import static Model.Constants.TIMESTAMP;
@@ -348,7 +349,7 @@ public class Controller {
             throw new ConnectException(CONTROL_NOT_CONNECTED_MSG);
         }
     }
-
+   
     /**
      * Selects Torque vs Time test type.
      * Checks for server connectivity, CSV file length and maximum torque
@@ -451,7 +452,12 @@ public class Controller {
 
         // view.updateTestStatus(testError);
         if (testError != serverSideTestError.NO_ERROR) {
-            view.alert(testError.getResponseMessage());
+            
+            if(!view.popupIsVisible())
+            {
+
+                view.alert(testError.getResponseMessage());
+            }
 
         }
 
@@ -542,7 +548,7 @@ public class Controller {
 
             try {
                 if (model.isConnected()) {
-                    model.writeVar("FALSE", "SIMOTION", "glob/KEEPALIVE");
+                    model.writeVar("FALSE", "SIMOTION", KEEPALIVE);
 
                     // model.readVars(VAR_PATH, null);
                     view.updateConnectionStatus(true);
